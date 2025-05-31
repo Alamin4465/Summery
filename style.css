@@ -1,0 +1,389 @@
+/* CSS রিসেট */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Kalpurush', Arial, sans-serif;
+    font-size: 1.05em;
+}
+
+/* মূল বডি স্টাইল */
+body {
+    background: #f0f8ff;
+    padding: 5px;
+    color: #2c3e50;
+    line-height: 1.7;
+}
+
+.user{
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px;
+        border-radius: 5px;
+    }
+    
+    #user-info {
+        color: white;
+        background-color: #3498db; /* নীল */
+        padding: 8px 15px;
+        border-radius: 4px;
+        font-weight: bold;
+    }
+    
+    #logoutBtn {
+        background-color: #e74c3c; /* লাল */
+        color: white;
+        border: none;
+        padding: 8px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: bold;
+    }
+    
+    #logoutBtn:hover {
+        background-color: #c0392b; /* ডার্ক রেড */
+    }
+
+/* হেডার স্টাইল */
+.header-box {
+    background: #007bff;
+    color: white;
+    padding: 2rem;
+    border-radius: 12px;
+    margin: 25px 0;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+}
+
+.header-box h1 {
+    font-size: 1.8em;
+    margin-bottom: 0.8rem;
+}
+
+.header-box p {
+    font-size: 1.3em;
+}
+
+/* সামারি কার্ড */
+.summary-container {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin: 35px 0;
+    flex-wrap: wrap;
+}
+
+.summary-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    width: 280px;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.summary-icon {
+    width: 65px;
+    height: 65px;
+    margin-bottom: 20px;
+}
+
+.summary-card h3 {
+    color: #007bff;
+    margin-bottom: 15px;
+    font-size: 1.4em;
+}
+
+.summary-card p {
+    font-size: 1.7em;
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+/* ফর্ম সেকশন */
+.form-container {
+    display: flex;
+    justify-content: center;
+    gap: 50px;
+    align-items: flex-start;
+    margin: 40px 0;
+    height: 400px
+}
+
+#transactionForm {
+    flex: 0 1 500px;
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.1);
+}
+
+.form-input {
+    width: 100%;
+    padding: 14px;
+    border: 2px solid #007bff;
+    border-radius: 8px;
+    margin-bottom: 18px;
+    font-size: 1.05em;
+}
+
+.form-button {
+    background: #007bff;
+    color: white;
+    padding: 14px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    width: 100%;
+    font-size: 1.1em;
+    transition: background 0.3s;
+}
+
+.form-button:hover {
+    background: #0056b3;
+}
+
+/* সঞ্চয় বক্স */
+.savings-box {
+    background: #e8f5e9;
+    width: 360px;
+    padding: 2.5rem;
+    border-radius: 12px;
+    border: 2px solid #a5d6a7;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.1);
+    text-align: center;
+    margin: 0 auto;
+}
+
+.savings-box h3 {
+    font-size: 1.6em;
+    margin-bottom: 1.2rem;
+    color: #1b5e20;
+}
+
+.savings{
+    font-size: 2.3em;
+    color: #2e7d32;
+    font-weight: 700;
+    margin: 1.5rem 0;
+}
+
+..Filter-tabel {
+  margin-top: 30px;
+  background: #f9f9f9;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.Filter-tabel h2 {
+  text-align: center; /* মাঝে রাখার জন্য */
+  color: #007bff;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+#filterButtons {
+  display: flex;
+  justify-content: flex-start; /* বামে রাখার জন্য */
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.filterBtn {
+  background-color: #007bff;
+  color: #333;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  font-weight: bold;
+}
+
+.filterBtn:hover {
+  background-color: red;
+  color: white;
+}
+
+.filterBtn.active {
+  background-color: red;
+  color: white;
+}
+
+#transactionTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+#transactionTable th,
+#transactionTable td {
+  border: 1px solid #ccc;
+  padding: 12px;
+  text-align: center;
+}
+
+#transactionTable th {
+  background-color: #007bff;
+  color: white;
+}
+
+.income-row {
+  background-color: #e0f7e9; /* হালকা সবুজ */
+  color: green;
+}
+
+.expense-row {
+  background-color: #fdeaea; /* হালকা লাল */
+  color: red;
+}
+
+/* বাটন ডিজাইন */
+.editBtn, .deleteBtn {
+  padding: 6px 12px;
+  margin: 2px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+/* এডিট বাটন – সবুজ */
+.editBtn {
+  background-color: #28a745;
+  color: white;
+}
+
+/* ডিলিট বাটন – লাল */
+.deleteBtn {
+  background-color: #dc3545;
+  color: white;
+}
+
+#chartsRow {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    .chart-container {
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+
+
+
+
+/* মাস ও তারিখ ফিল্টার স্টাইল */
+.Filter-monthday {
+  margin-top: 30px;
+  background: #f9f9f9;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+
+.monthday h2 {
+  text-align: center; /* মাঝে রাখার জন্য */
+  color: #007bff;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.monthday label {
+  font-weight: bold;
+  margin-right: 10px;
+}
+
+.monthday input {
+  padding: 10px;
+  margin: 5px 10px 15px 0;
+  border: 1px solid #007bff;
+  border-radius: 6px;
+  font-size: 16px;
+}
+
+#resetFilterBtn {
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+#resetFilterBtn:hover {
+  background-color: red;
+}
+
+/* ফিল্টারড টেবিল ডিজাইন */
+.monthdaytable table,
+.monthly-summary table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    font-weight: bold;
+}
+
+.monthdaytable th,
+.monthdaytable td,
+.monthly-summary td {
+  border: 1px solid #ccc;
+  padding: 12px;
+  text-align: center;
+    font-weight: bold;
+    
+
+}
+
+.#monthlySummary table {
+  border-collapse: collapse;
+  width: 100%;
+  font-family: Arial, sans-serif;
+  text-align: center;
+    font-weight: bold;
+}
+
+#monthlySummary th,
+#monthlySummary td {
+  border: 2px solid #000;
+  padding: 8px;
+    font-weight: bold;
+    font-size: 1.3em;
+}
+
+#monthlySummary thead tr {
+  background-color: #663399;
+  color: orange;
+    font-weight: bold;
+}
+
+#monthlySummary tbody tr:nth-child(1) td {
+  font-weight: bold;
+    font-size: 1.3em;
+}
+
+#monthlySummary tbody tr:nth-child(1) td:nth-child(2) {
+  color: red;
+    font-weight: bold;
+}
+
+#monthlySummary tbody tr:nth-child(3) td:nth-child(4),
+#monthlySummary tbody tr:nth-child(3) td:nth-child(5) {
+  color: red;
+    font-weight: bold;
+}
+
+#monthlySummary tbody tr:last-child {
+  background-color: #cc3300;
+  color: white;
+  font-weight: bold;
+}
