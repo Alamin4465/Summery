@@ -8,7 +8,7 @@ const password = document.getElementById('loginPassword').value;
 firebase.auth().signInWithEmailAndPassword(email, password)
 .then(() => {
 alert("লগইন সফল");
-window.location.href = "main.html";
+window.location.href = "index.html";
 })
 .catch((error) => {
 alert("লগইন ব্যর্থ: " + error.message);
