@@ -229,9 +229,6 @@ function toBanglaNumber(input) {
 }
 
 
-/
-
-
 // প্রোফাইল তথ্য লোডার (আপনি ডাটাবেজ অনুযায়ী আপডেট করবেন)
 function loadProfileInfo() {
   const content = document.getElementById('content');
@@ -239,15 +236,3 @@ function loadProfileInfo() {
 }
 
 
-
-document.addEventListener("DOMContentLoaded", () => {
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      transactionFilter();
-      renderForm();
-      loadDashboardSummary();
-    } else {
-      window.location.href = "login.html";
-    }
-  });
-});
