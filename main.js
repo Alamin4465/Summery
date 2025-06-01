@@ -598,9 +598,7 @@ function toBanglaNumber(input) {
 }
 
 
-// DOM loaded হলে কল করো
-document.addEventListener("DOMContentLoaded", function () {
-});
+/
 
 
 // প্রোফাইল তথ্য লোডার (আপনি ডাটাবেজ অনুযায়ী আপডেট করবেন)
@@ -608,36 +606,7 @@ function loadProfileInfo() {
   const content = document.getElementById('content');
   content.innerHTML = `<h2>প্রোফাইল তথ্য</h2><p>এই অংশে ইউজারের প্রোফাইল তথ্য দেখাবে।</p>`;
 }
-function submitHandler(e) {
-  e.preventDefault();
 
-  const user = firebase.auth().currentUser;
-  if (!user) return;
-
-  const date = document.getElementById("date").value;
-  const type = document.getElementById("type").value;
-  const category = document.getElementById("category").value;
-  const amount = parseFloat(document.getElementById("amount").value);
-
-  firebase.firestore()
-    .collection("users")
-    .doc(user.uid)
-    .collection("transactions")
-    .add({
-      date,
-      type,
-      category,
-      amount,
-      timestamp: firebase.firestore.FieldValue.serverTimestamp()
-    })
-    .then(() => {
-      document.getElementById("transactionForm").reset();
-      loadTransactions(user.uid);
-    })
-    .catch((error) => {
-      console.error("সংরক্ষণ করতে সমস্যা হয়েছে:", error);
-    });
-}
 
 
 document.addEventListener("DOMContentLoaded", () => {
