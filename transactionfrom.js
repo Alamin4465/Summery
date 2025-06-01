@@ -1,3 +1,34 @@
+function submitHandler(e) {
+  e.preventDefault();
+
+  const user = firebase.auth().currentUser;
+  if (!user) return;
+
+  const date = document.getElementById("date").value;
+  const type = document.getElementById("type").value;
+  const category = document.getElementById("category").value;
+  const amount = parseFloat(document.getElementById("amount").value);
+
+  firebase.firestore()
+    .collection("users")
+    .doc(user.uid)
+    .collection("transactions")
+    .add({
+      date,
+      type,
+      category,
+      amount,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    })
+    .then(() => {
+      document.getElementById("transactionForm").reset();
+      loadTransactions(user.uid);
+    })
+    .catch((error) => {
+      console.error("সংরক্ষণ করতে সমস্যা হয়েছে:", error);
+    });
+}
+
 // content section এ ফর্ম বসানো ও event listener বসানো
 function renderForm() {
   const content = document.getElementById('content');
