@@ -1,4 +1,4 @@
-export function transactionFilter() {
+function transactionFilter() {
   const content = document.getElementById('content');
   content.innerHTML = `
     <h2>লেনদেন ফর্ম</h2>
