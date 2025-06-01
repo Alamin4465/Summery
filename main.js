@@ -245,7 +245,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (user) {
       transactionFilter();
       renderForm();
-      loadDashboardSummary()
+      loadDashboardSummary();
     } else {
       window.location.href = "login.html";
     }
