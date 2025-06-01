@@ -1,39 +1,29 @@
+let currentFilter = "all";
+let allTransactions = [];
 let currentUser = null;
+let unsubscribeTransaction = null;
 
-// ইউজার লগইন না করলে রিডাইরেক্ট করো
+// Firebase auth state চেক (লগইন না হলে রিডাইরেক্ট)
 firebase.auth().onAuthStateChanged(user => {
   if (!user) {
     window.location.href = "login.html";
   } else {
     currentUser = user;
-    activate(document.getElementById('nav-dashboard'), 'ড্যাশবোর্ড'); // ড্যাশবোর্ড ডিফল্ট
+    userId = user.uid;
+    activate(document.getElementById('nav-dashboard'), 'ড্যাশবোর্ড');
   }
 });
 
-// সব বাটনের ক্লিক হ্যান্ডলার
+// DOM লোড হলে মেনু বাটনগুলোতে ইভেন্ট লিসেনার লাগানো
 document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('nav-dashboard')?.addEventListener('click', function () {
-    activate(this, 'ড্যাশবোর্ড');
-  });
-
-  document.getElementById('nav-forms')?.addEventListener('click', function () {
-    activate(this, 'ফ্রমস');
-  });
-
-  document.getElementById('nav-submit')?.addEventListener('click', function () {
-    activate(this, 'ট্রানজেকশন');
-  });
-
-  document.getElementById('nav-filter')?.addEventListener('click', function () {
-    activate(this, 'ফিল্টার');
-  });
-
-  document.getElementById('nav-profile')?.addEventListener('click', function () {
-    activate(this, 'প্রোফাইল তথ্য');
-  });
+  document.getElementById('nav-dashboard')?.addEventListener('click', () => activate(document.getElementById('nav-dashboard'), 'ড্যাশবোর্ড'));
+  document.getElementById('nav-forms')?.addEventListener('click', () => activate(document.getElementById('nav-forms'), 'ফ্রমস'));
+  document.getElementById('nav-submit')?.addEventListener('click', () => activate(document.getElementById('nav-submit'), 'ট্রানজেকশন'));
+  document.getElementById('nav-filter')?.addEventListener('click', () => activate(document.getElementById('nav-filter'), 'ফিল্টার'));
+  document.getElementById('nav-profile')?.addEventListener('click', () => activate(document.getElementById('nav-profile'), 'প্রোফাইল তথ্য'));
 });
 
-// সেকশন একটিভ এবং লোড করো
+// সেকশন অ্যাকটিভেট করার ফাংশন
 function activate(button, sectionName) {
   document.querySelectorAll('.menu-button').forEach(btn => btn.classList.remove('active'));
   button.classList.add('active');
@@ -46,78 +36,207 @@ function activate(button, sectionName) {
     loadDashboardSummary();
   } else if (sectionName === 'ফ্রমস') {
     content.innerHTML = `<h2>ফর্ম পেজ</h2><p>এখানে ফর্ম আসবে।</p>`;
-  } else if (sectionName === 'ট্রানজেকশন') {
-    loadTransactions();
   } else if (sectionName === 'ফিল্টার') {
     content.innerHTML = `<h2>ফিল্টার</h2><p>ডেটা ফিল্টার করার ফিচার আসবে।</p>`;
+  } else if (sectionName === 'ট্রানজেকশন') {
+    loadTransactions();
   } else {
     content.innerHTML = `<p>এই অংশটি এখনো তৈরি হয়নি।</p>`;
   }
 }
 
-// প্রোফাইল তথ্য লোড করো
-function loadProfileInfo() {
+// বাংলা নম্বর রূপান্তর (কমা সহ)
+function toBanglaNumber(number) {
+  if (typeof number !== "number") number = parseFloat(number) || 0;
+  return number.toLocaleString('bn-BD', { maximumFractionDigits: 2 });
+}
+
+// Income ও Expense ক্যাটাগরি তালিকা (প্রয়োজন অনুযায়ী পরিবর্তন করো)
+const incomeCategories = ["বেতন", "ব্যবসা", "অন্যান্য", "বাইক"];
+const expenseCategories = [
+  "বাসা ভাড়া", "মোবাইল রিচার্জ", "বিদ্যুৎ বিল", "পরিবহন", "দোকান বিল",
+  "কেনাকাটা", "গাড়ির খরচ", "কাচা বাজার", "বাড়ি", "হাস্পাতাল",
+  "ব্যক্তিগত", "অন্যান্য", "গাড়ির তেল", "নাস্তা", "খাওয়া"
+];
+
+// ট্রানজেকশন লোড (ফিল্টার ও রিয়েলটাইম)
+function loadTransactions() {
   const content = document.getElementById('content');
-  content.innerHTML = `<h2 class="titel">প্রোফাইল তথ্য</h2><p>তথ্য লোড হচ্ছে...</p>`;
+  content.innerHTML = `
+    <h2 class="titel">ট্রানজেকশন</h2>
+    <div class="Filter-tabel">
+      <div id="filterButtons">
+        <button data-filter="all" class="filterBtn active">সব</button>
+        <button data-filter="income" class="filterBtn">শুধু আয়</button>
+        <button data-filter="expense" class="filterBtn">শুধু ব্যয়</button>
+      </div>
+      <table id="transactionTable">
+        <thead>
+          <tr>
+            <th>তারিখ</th>
+            <th>টাইপ</th>
+            <th>ক্যাটেগরি</th>
+            <th>টাকা</th>
+            <th>অ্যাকশন</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div id="summary" style="margin-top: 20px; font-weight: bold;"></div>
+  `;
 
-  firebase.firestore().collection("users").doc(currentUser.uid).get()
-    .then(doc => {
-      if (doc.exists) {
+  // ফিল্টার বাটনে ইভেন্ট লাগানো
+  document.querySelectorAll('#filterButtons .filterBtn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#filterButtons .filterBtn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentFilter = btn.dataset.filter;
+      fetchTransactionsRealtime();
+    });
+  });
+
+  fetchTransactionsRealtime();
+}
+
+// Firestore থেকে রিয়েলটাইম ডেটা ফেচ ও রেন্ডার
+function fetchTransactionsRealtime() {
+  if (unsubscribeTransaction) unsubscribeTransaction();
+
+  const tbody = document.querySelector("#transactionTable tbody");
+  tbody.innerHTML = "";
+  allTransactions = [];
+
+  const db = firebase.firestore();
+
+  unsubscribeTransaction = db.collection("users")
+    .doc(currentUser.uid)
+    .collection("transactions")
+    .orderBy("timestamp", "desc")
+    .onSnapshot(snapshot => {
+      tbody.innerHTML = "";
+      allTransactions = [];
+
+      snapshot.forEach(doc => {
         const data = doc.data();
-        content.innerHTML = `
-          <h2 class="titel">প্রোফাইল তথ্য</h2>
-          <ul>
-            <li><strong>নাম:</strong> ${data.name || "নির্ধারিত নয়"}</li>
-            <li><strong>ইমেইল:</strong> ${currentUser.email}</li>
-            <li><strong>জন্মতারিখ:</strong> ${data.dob || "নির্ধারিত নয়"}</li>
-            <li><strong>লিঙ্গ:</strong> ${data.gender || "নির্ধারিত নয়"}</li>
-          </ul>
-          <button onclick="changePassword()">🔑 পাসওয়ার্ড পরিবর্তন করুন</button>
+        const type = data.type || "";
+        if (currentFilter !== "all" && type !== currentFilter) return;
+
+        allTransactions.push({ id: doc.id, ...data });
+
+        const row = document.createElement("tr");
+        row.className = (type === "income") ? "income-row" : "expense-row";
+        row.innerHTML = `
+          <td>${data.date || ""}</td>
+          <td>${type === "income" ? "আয়" : "ব্যয়"}</td>
+          <td>${data.category || ""}</td>
+          <td>${toBanglaNumber(parseFloat(data.amount || 0))}</td>
+          <td>
+            <button class="editBtn" data-id="${doc.id}">এডিট</button>
+            <button class="deleteBtn" data-id="${doc.id}">ডিলিট</button>
+          </td>
         `;
-      } else {
-        content.innerHTML = `<p>প্রোফাইল তথ্য পাওয়া যায়নি।</p>`;
+        tbody.appendChild(row);
+      });
+
+      renderSummary(allTransactions);
+      setupEditDeleteHandlers();
+    });
+}
+
+// মোট আয়/ব্যয়/ব্যালেন্স দেখানো
+function renderSummary(transactions) {
+  const summaryDiv = document.getElementById('summary');
+  const totalIncome = transactions.filter(t => t.type === "income").reduce((acc, t) => acc + parseFloat(t.amount || 0), 0);
+  const totalExpense = transactions.filter(t => t.type === "expense").reduce((acc, t) => acc + parseFloat(t.amount || 0), 0);
+  const balance = totalIncome - totalExpense;
+
+  let html = "";
+  if (currentFilter === "all") {
+    html = `মোট আয়: ${toBanglaNumber(totalIncome)} টাকা | মোট ব্যয়: ${toBanglaNumber(totalExpense)} টাকা | বর্তমান ব্যালেন্স: ${toBanglaNumber(balance)} টাকা`;
+  } else if (currentFilter === "income") {
+    html = `মোট আয়: ${toBanglaNumber(totalIncome)} টাকা`;
+  } else if (currentFilter === "expense") {
+    html = `মোট ব্যয়: ${toBanglaNumber(totalExpense)} টাকা`;
+  }
+  summaryDiv.innerHTML = html;
+}
+
+// Edit/Delete হ্যান্ডলার
+function setupEditDeleteHandlers() {
+  const tbody = document.querySelector("#transactionTable tbody");
+
+  tbody.querySelectorAll(".editBtn").forEach(btn => {
+    btn.onclick = async () => {
+      const id = btn.dataset.id;
+      const db = firebase.firestore();
+      const docRef = db.collection("users").doc(currentUser.uid).collection("transactions").doc(id);
+      const doc = await docRef.get();
+      const data = doc.data();
+
+      if (!data) return alert("ডাটা পাওয়া যায়নি!");
+
+      // Prompt দিয়ে ডাটা এডিট করা
+      const newDate = prompt("তারিখ (YYYY-MM-DD):", data.date || "");
+      if (newDate === null) return;
+
+      const newType = prompt("টাইপ (income/expense):", data.type || "");
+      if (newType === null || !["income", "expense"].includes(newType)) return alert("সঠিক টাইপ দিন");
+
+      const categories = newType === "income" ? incomeCategories : expenseCategories;
+      const newCategory = prompt(`ক্যাটেগরি নির্বাচন করুন:\n${categories.join(", ")}`, data.category || "");
+      if (newCategory === null || !categories.includes(newCategory)) return alert("সঠিক ক্যাটেগরি দিন");
+
+      const newAmountStr = prompt("টাকার পরিমাণ লিখুন:", data.amount || "");
+      if (newAmountStr === null) return;
+
+      const newAmount = parseFloat(newAmountStr);
+      if (isNaN(newAmount)) return alert("সঠিক টাকার পরিমাণ দিন");
+
+      // ডকুমেন্ট আপডেট
+      await docRef.update({
+        date: newDate,
+        type: newType,
+        category: newCategory,
+        amount: newAmount,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      fetchTransactionsRealtime();
+    };
+  });
+
+  tbody.querySelectorAll(".deleteBtn").forEach(btn => {
+    btn.onclick = async () => {
+      const id = btn.dataset.id;
+      if (confirm("আপনি কি নিশ্চিতভাবে ডিলিট করতে চান?")) {
+        const db = firebase.firestore();
+        await db.collection("users").doc(currentUser.uid).collection("transactions").doc(id).delete();
       }
-    })
-    .catch(error => {
-      console.error("প্রোফাইল তথ্য লোড করতে সমস্যা:", error);
-      content.innerHTML = `<p>প্রোফাইল লোডে সমস্যা হয়েছে।</p>`;
-    });
+    };
+  });
 }
 
-function changePassword() {
-  const email = currentUser.email;
-  firebase.auth().sendPasswordResetEmail(email)
-    .then(() => {
-      alert("আপনার ইমেইলে পাসওয়ার্ড পরিবর্তনের লিংক পাঠানো হয়েছে।");
-    })
-    .catch(error => {
-      console.error("পাসওয়ার্ড পরিবর্তনে সমস্যা:", error);
-      alert("পাসওয়ার্ড রিসেট করতে সমস্যা হয়েছে।");
-    });
-}
-
-// ✅ ড্যাশবোর্ড সামারি লোড করো
 function loadDashboardSummary() {
   const content = document.getElementById('content');
   content.innerHTML = `
     <h2>ড্যাশবোর্ড</h2>
+
     <div id="summary" class="summary-container">
       <div class="summary-card">
-        <img src="https://cdn-icons-png.flaticon.com/128/3135/3135679.png" class="summary-icon" alt="আয়">
         <h3>মোট আয়</h3>
-        <p><span id="totalIncome">0</span></p>
+        <p><span id="totalIncome">০</span> টাকা</p>
       </div>
       <div class="summary-card">
-        <img src="https://cdn-icons-png.flaticon.com/128/992/992700.png" class="summary-icon" alt="ব্যয়">
         <h3>মোট ব্যয়</h3>
-        <p><span id="totalExpense">0</span></p>
+        <p><span id="totalExpense">০</span> টাকা</p>
       </div>
       <div class="summary-card">
-        <img src="https://cdn-icons-png.flaticon.com/128/3135/3135686.png" class="summary-icon" alt="ব্যালেন্স">
         <h3>বর্তমান ব্যালেন্স</h3>
-        <p><span id="balance">0</span></p>
+        <p><span id="balance">০</span> টাকা</p>
       </div>
     </div>
+
     <div class="chartstyle">
   										<div id="fuel-gauge"></div>
       <canvas id="summaryChart"></canvas>
@@ -140,52 +259,43 @@ function loadDashboardSummary() {
     snapshot.forEach(doc => {
       const data = doc.data();
       const amount = parseFloat(data.amount || 0);
-      const category = data.category || 'অন্যান্য';
-      const date = (data.date || '').split('T')[0];
+      const type = data.type;
+      const category = data.category || "অন্যান্য";
+      const date = data.date || "অজানা";
 
-      if (data.type === "income") {
+      if (type === "income") {
         totalIncome += amount;
         incomeByCategory[category] = (incomeByCategory[category] || 0) + amount;
-      } else if (data.type === "expense") {
+      } else if (type === "expense") {
         totalExpense += amount;
         expenseByCategory[category] = (expenseByCategory[category] || 0) + amount;
       }
 
-      if (date) {
-        if (!dateWise[date]) dateWise[date] = { income: 0, expense: 0 };
-        if (data.type === 'income') dateWise[date].income += amount;
-        else if (data.type === 'expense') dateWise[date].expense += amount;
+      if (!dateWise[date]) {
+        dateWise[date] = { income: 0, expense: 0 };
       }
+      dateWise[date][type] += amount;
     });
 
-    const savings = totalIncome - totalExpense;
-    const savingsRate = totalIncome > 0 ? (savings / totalIncome) * 100 : 0;
+    const balance = totalIncome - totalExpense;
+    const savingRate = totalIncome > 0 ? Math.round((balance / totalIncome) * 100) : 0;
 
-    document.getElementById("totalIncome").textContent = '৳' + toBanglaNumber(totalIncome);
-document.getElementById("totalExpense").textContent = '৳' + toBanglaNumber(totalExpense);
-document.getElementById("balance").textContent = '৳' + toBanglaNumber(savings);
+    // আপডেট সংক্ষিপ্ত তথ্য
+    document.getElementById("totalIncome").textContent = toBanglaNumber(totalIncome);
+    document.getElementById("totalExpense").textContent = toBanglaNumber(totalExpense);
+    document.getElementById("balance").textContent = toBanglaNumber(balance);
 
-    drawSummaryChart(totalIncome, totalExpense, savings);
+    // চার্ট আঁকা
+    drawSummaryChart(totalIncome, totalExpense, balance);
     drawCategoryChart(incomeByCategory, expenseByCategory);
     drawLineChart(dateWise);
-    drawFuelGauge(savingsRate);
+    drawFuelGauge(savingRate);
   });
 }
 
-// 🔢 বাংলা নম্বর রূপান্তর
-function toBanglaNumber(number) {
-  return number.toLocaleString('bn-BD', { maximumFractionDigits: 2 });
-}
-
-function toBanglaPercentage(number) {
-  return toBanglaNumber(number.toFixed(2)) + '%';
-}
-
-// 📊 বার চার্ট (সারাংশ)
 function drawSummaryChart(income, expense, balance) {
   const ctx = document.getElementById('summaryChart').getContext('2d');
-
-  new Chart(ctx, {
+    new Chart(ctx, {
     type: 'bar',
     data: {
       labels: ['আয়', 'ব্যয়', 'সঞ্চয়'],
@@ -226,22 +336,27 @@ function drawSummaryChart(income, expense, balance) {
     plugins: [ChartDataLabels]
   });
 }
-
-// 🍩 ক্যাটাগরি ডোয়নাট চার্ট
 function drawCategoryChart(incomeData, expenseData) {
   const ctx = document.getElementById('categoryChart').getContext('2d');
 
   const incomeCategories = Object.keys(incomeData);
   const expenseCategories = Object.keys(expenseData);
-  const incomeValues = Object.values(incomeData);
-  const expenseValues = Object.values(expenseData);
 
-  const labels = [...incomeCategories, ...expenseCategories];
-  const values = [...incomeValues, ...expenseValues];
-  const colors = [...incomeCategories.map(() => '#4caf50'), ...expenseCategories.map(() => '#f44336')];
+  const labels = [
+    ...incomeCategories.map(c => `আয় - ${c}`),
+    ...expenseCategories.map(c => `ব্যয় - ${c}`)
+  ];
+  const values = [
+    ...incomeCategories.map(c => incomeData[c]),
+    ...expenseCategories.map(c => expenseData[c])
+  ];
+  const colors = [
+    ...incomeCategories.map(() => '#4caf50'),
+    ...expenseCategories.map(() => '#f44336')
+  ];
 
-  const incomeTotal = incomeValues.reduce((a, b) => a + b, 0);
-  const expenseTotal = expenseValues.reduce((a, b) => a + b, 0);
+  const incomeTotal = values.slice(0, incomeCategories.length).reduce((a, b) => a + b, 0);
+  const expenseTotal = values.slice(incomeCategories.length).reduce((a, b) => a + b, 0);
   const balance = incomeTotal - expenseTotal;
   const total = incomeTotal + expenseTotal;
 
@@ -281,277 +396,215 @@ function drawCategoryChart(incomeData, expenseData) {
     plugins: [ChartDataLabels, {
       id: 'centerText',
       beforeDraw(chart) {
-  const { width, height, ctx } = chart;
-  const centerX = width / 2;
-  const centerY = height / 2;
+        const { width, height, ctx } = chart;
+        const centerX = width / 2;
+        const centerY = height / 2;
 
-  // 🟦 ১. মাঝখানে ব্যাকগ্রাউন্ড রঙ বসানো
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(centerX, centerY, chart._metasets[0].data[0].outerRadius * 0.4, 0, 2 * Math.PI);
-  ctx.fillStyle = 'rgba(0, 0, 255, 0.1)'; // ⬅️ মাঝখানের ব্যাকগ্রাউন্ড কালার (ট্রান্সপারেন্ট কালো)
-  ctx.fill();
-  ctx.closePath();
-  ctx.restore();
+        // মাঝখানে ব্যাকগ্রাউন্ড রঙ
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, chart._metasets[0].data[0].outerRadius * 0.4, 0, 2 * Math.PI);
+        ctx.fillStyle = 'rgba(0, 0, 255, 0.1)';
+        ctx.fill();
+        ctx.closePath();
+        ctx.restore();
 
-  // 🟩 ২. টেক্সট রঙ এবং স্টাইল
-  ctx.save();
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillStyle = '#ffffff'; // ⬅️ টেক্সটের রঙ (সাদা)
-  ctx.font = 'bold 28px SolaimanLipi, sans-serif';
-  ctx.fillText('মোট টাকা', centerX, centerY - 10);
-  ctx.font = 'bold 20px SolaimanLipi, sans-serif';
-  ctx.fillText(`৳${toBanglaNumber(balance)}`, centerX, centerY + 15);
-  ctx.restore();
-}
+        // টেক্সট
+        ctx.save();
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 28px SolaimanLipi, sans-serif';
+        ctx.fillText('মোট টাকা', centerX, centerY - 10);
+        ctx.font = 'bold 20px SolaimanLipi, sans-serif';
+        ctx.fillText(`৳${toBanglaNumber(balance)}`, centerX, centerY + 15);
+        ctx.restore();
+      }
     }]
   });
 }
-
-// 📈 লাইনে তারিখভিত্তিক চার্ট
 function drawLineChart(dateData) {
   const ctx = document.getElementById('lineChart').getContext('2d');
   const sortedDates = Object.keys(dateData).sort();
 
- new Chart(ctx, {
-  type: 'line',
-  data: {
-    labels: sortedDates,
-    datasets: [
-      {
-        label: 'আয়',
-        data: sortedDates.map(date => dateData[date].income),
-        borderColor: '#4caf50',
-        backgroundColor: 'rgba(76, 175, 80, 0.5)',
-        pointBackgroundColor: '#4caf50',
-        pointRadius: 4,
-        tension: 0.5,
-        fill: true
-      },
-      {
-        label: 'ব্যয়',
-        data: sortedDates.map(date => dateData[date].expense),
-        borderColor: '#f44336',
-        backgroundColor: 'rgba(244, 67, 54, 0.5)',
-        pointBackgroundColor: '#f44336',
-        pointRadius: 4,
-        tension: 0.5,
-        fill: true
-      }
-    ]
-  },
-  options: {
-    responsive: true,
-    plugins: {
-      tooltip: {
-        mode: 'index',
-        intersect: false,
-        bodyFont: {
-          size: 20 // টুলটিপের ফন্ট সাইজ বড়
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: sortedDates,
+      datasets: [
+        {
+          label: 'আয়',
+          data: sortedDates.map(date => dateData[date].income || 0),
+          borderColor: '#4caf50',
+          backgroundColor: 'rgba(76, 175, 80, 0.5)',
+          pointBackgroundColor: '#4caf50',
+          pointRadius: 4,
+          tension: 0.5,
+          fill: true
         },
-        titleFont: {
-          size: 22 // টুলটিপের টাইটেল বড়
+        {
+          label: 'ব্যয়',
+          data: sortedDates.map(date => dateData[date].expense || 0),
+          borderColor: '#f44336',
+          backgroundColor: 'rgba(244, 67, 54, 0.5)',
+          pointBackgroundColor: '#f44336',
+          pointRadius: 4,
+          tension: 0.5,
+          fill: true
         }
-      },
-      legend: {
-        labels: {
-          font: {
-            family: 'Arial',
-            size: 24 // লেবেল (আয়/ব্যয়) ফন্ট সাইজ
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        tooltip: {
+          mode: 'index',
+          intersect: false,
+          bodyFont: {
+            size: 20 // টুলটিপের ফন্ট সাইজ বড়
           },
-          color: '#ffffff'
-        }
-      }
-    },
-    interaction: {
-      mode: 'nearest',
-      axis: 'x',
-      intersect: false
-    },
-    scales: {
-      x: {
-        grid: {
-          display: false
+          titleFont: {
+            size: 22 // টুলটিপের টাইটেল বড়
+          }
         },
-        ticks: {
-          color: '#ffffff',
-          font: {
-            size: 18 // এক্স-অক্ষ টিক ফন্ট সাইজ
+        legend: {
+          labels: {
+            font: {
+              family: 'Arial',
+              size: 24 // লেবেল (আয়/ব্যয়) ফন্ট সাইজ
+            },
+            color: '#ffffff'
           }
         }
       },
-      y: {
-        beginAtZero: true,
-        min: 0,
-        ticks: {
-          stepSize: 500,
-          color: '#ffffff',
-          font: {
-            size: 18 // ওয়াই-অক্ষ টিক ফন্ট সাইজ
+      interaction: {
+        mode: 'nearest',
+        axis: 'x',
+        intersect: false
+      },
+      scales: {
+        x: {
+          grid: {
+            display: false
           },
-          callback: function(value) {
-            return value + ' টাকা';
+          ticks: {
+            color: '#ffffff',
+            font: {
+              size: 18 // এক্স-অক্ষ টিক ফন্ট সাইজ
+            }
           }
         },
-        grid: {
-          color: 'rgba(255, 255, 255, 0.2)'
+        y: {
+          beginAtZero: true,
+          min: 0,
+          ticks: {
+            stepSize: 500,
+            color: '#ffffff',
+            font: {
+              size: 18 // ওয়াই-অক্ষ টিক ফন্ট সাইজ
+            },
+            callback: function(value) {
+              return value + ' টাকা';
+            }
+          },
+          grid: {
+            color: 'rgba(255, 255, 255, 0.2)'
+          }
         }
       }
     }
-  }
-});
+  });
 }
-let fuelGaugeChart = null; // 🔥 Declare this globally
-
 function drawFuelGauge(savingRate) {
-  let color = "#FF0000";
-  if (savingRate <= 10) color = "#FF0000";
-  else if (savingRate <= 20) color = "#FF6666";
-  else if (savingRate <= 30) color = "#FF9900";
-  else if (savingRate <= 50) color = "#CCCC00";
-  else if (savingRate <= 80) color = "#66CC66";
-  else color = "#006400";
+  function getColor(savingRate) {
+    if (savingRate <= 5) return "#b71c1c";       
+    else if (savingRate <= 11) return "#D63029";  
+    else if (savingRate <= 17) return "#f44336"; 
+    else if (savingRate <= 23) return "#FA6E1B";  
+    else if (savingRate <= 30) return "#ff9800"; 
+    else if (savingRate <= 37) return "#E6BA1D"; 
+    else if (savingRate <= 44) return "#DACB2B";  
+    else if (savingRate <= 51) return "#cddc39";  
+    else if (savingRate <= 58) return "#ADD13F"; 
+    else if (savingRate <= 65) return "#9DCC42";  
+    else if (savingRate <= 72) return "#8DC645";  
+    else if (savingRate <= 79) return "#5EA23C"; 
+    else if (savingRate <= 84) return "#469037";
+    else if (savingRate <= 90) return "#3A8735"; 
+    else if (savingRate <= 95) return "#348234";
+    else return "#2e7d32";                        
+  }
+
+  const color = getColor(savingRate); // ✅ এখানে ফাংশন কল করে color বের করছি
 
   const options = {
     chart: {
-      height: 380,
+      height: 300,
       type: "radialBar",
-      offsetY: -20,
-      animations: {
-        enabled: true,
-        easing: "easeinout",
-        speed: 800,
-        animateGradually: {
-          enabled: true,
-          delay: 150
-        },
-        dynamicAnimation: {
-          enabled: true,
-          speed: 800
-        }
-      }
     },
+    series: [savingRate],
+    labels: ["সঞ্চয় হার (%)"],
+    colors: [color], // ✅ এখন ঠিকঠাক color বসানো হলো
     plotOptions: {
       radialBar: {
         startAngle: -135,
         endAngle: 135,
         hollow: {
-          margin: 0,
           size: "50%",
-          background: "transparent"
         },
         track: {
-          background: "rgba(255, 255, 255, 0.1)",
-          strokeWidth: "100%",
-          margin: 0
+          background: "#eee",
+          startAngle: -135,
+          endAngle: 135,
         },
         dataLabels: {
           name: {
-            offsetY: -5,
-            color: "#fff",
-            fontSize: "28"
+            fontSize: "16px",
+            color: "#000",
+            offsetY: 30,
           },
           value: {
-            offsetY: 10,
-            fontSize: "40px",
-            color: "#fff",
+            offsetY: -20,
+            fontSize: "22px",
+            color: "#000",
             formatter: function (val) {
-              return parseInt(val) + "%";
-            }
-          }
-        }
-      }
+              return toBanglaNumber(val.toFixed(0)) + " %";
+            },
+          },
+        },
+      },
     },
     fill: {
       type: "solid",
-      colors: [color],
     },
     stroke: {
       lineCap: "round",
     },
-    series: [savingRate],
-    labels: ["সঞ্চয় রেট"]
   };
+
   const chart = new ApexCharts(document.querySelector("#fuel-gauge"), options);
-  if (fuelGaugeChart) fuelGaugeChart.destroy(); // পুরনো চার্ট থাকলে ধ্বংস করো
-  fuelGaugeChart = chart;
-  chart.render(); // নতুন চার্ট আঁকো
+  chart.render();
 }
 
-let currentFilter = 'all';
-let unsubscribe = null;
 
-function loadTransactions() {
-  const db = firebase.firestore();
-  const tbody = document.querySelector("#transactionTable tbody");
-  const totalIncomeEl = document.getElementById("totalIncome");
-  const totalExpenseEl = document.getElementById("totalExpense");
-  const netTotalEl = document.getElementById("netTotal");
-
-  // পূর্বের লিসেনার আনসাবস্ক্রাইব করুন
-  if (unsubscribe) unsubscribe();
-
-  let query = db.collection("users").doc(userId).collection("transactions").orderBy("timestamp", "desc");
-
-  if (currentFilter !== "all") {
-    query = query.where("type", "==", currentFilter);
-  }
-
-  unsubscribe = query.onSnapshot(snapshot => {
-    tbody.innerHTML = "";
-    let totalIncome = 0;
-    let totalExpense = 0;
-
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      const amount = parseFloat(data.amount || 0);
-      const type = data.type || "";
-
-      if (type === "income") {
-        totalIncome += amount;
-      } else if (type === "expense") {
-        totalExpense += amount;
-      }
-
-      const row = document.createElement("tr");
-      row.className = type === "income" ? "income-row" : "expense-row";
-
-      row.innerHTML = `
-        <td>${data.date || ""}</td>
-        <td>${type === "income" ? "আয়" : "ব্যয়"}</td>
-        <td>${data.category || ""}</td>
-        <td>${toBanglaNumber(amount)}</td>
-        <td>
-          <button class="editBtn" data-id="${doc.id}">এডিট</button>
-          <button class="deleteBtn" data-id="${doc.id}">ডিলিট</button>
-        </td>
-      `;
-      tbody.appendChild(row);
-    });
-
-    // মোট হিসাব আপডেট করুন
-    totalIncomeEl.textContent = toBanglaNumber(totalIncome);
-    totalExpenseEl.textContent = toBanglaNumber(totalExpense);
-    netTotalEl.textContent = toBanglaNumber(totalIncome - totalExpense);
-  });
+// Helper: Convert English number to Bangla
+function toBanglaNumber(input) {
+  const banglaDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+  return input
+    .toString()
+    .split('')
+    .map(d => (/\d/.test(d) ? banglaDigits[parseInt(d)] : d))
+    .join('');
 }
 
-// ফিল্টার বাটনের ইভেন্ট লিসেনার
-document.querySelectorAll(".filterBtn").forEach(btn => {
-  btn.addEventListener("click", () => {
-    document.querySelectorAll(".filterBtn").forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
-    currentFilter = btn.getAttribute("data-filter");
-    loadTransactions();
-  });
+
+// DOM loaded হলে কল করো
+document.addEventListener("DOMContentLoaded", function () {
 });
 
-// বাংলা সংখ্যায় রূপান্তর ফাংশন
-function toBanglaNumber(number) {
-  const banglaDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
-  return number.toString().replace(/\d/g, d => banglaDigits[d]);
-}
 
-// প্রাথমিকভাবে সব ট্রানজেকশন লোড করুন
-loadTransactions();
+// প্রোফাইল তথ্য লোডার (আপনি ডাটাবেজ অনুযায়ী আপডেট করবেন)
+function loadProfileInfo() {
+  const content = document.getElementById('content');
+  content.innerHTML = `<h2>প্রোফাইল তথ্য</h2><p>এই অংশে ইউজারের প্রোফাইল তথ্য দেখাবে।</p>`;
+}
