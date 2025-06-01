@@ -641,7 +641,12 @@ function submitHandler(e) {
 
 
 document.addEventListener("DOMContentLoaded", () => {
-  transactionFilter();
-	renderForm();
-
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      transactionFilter();
+      renderForm();
+    } else {
+      window.location.href = "login.html";
+    }
+  });
 });
