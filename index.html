@@ -13,37 +13,27 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
   <script src="firebase-config.js"></script>
 
-  <!-- Chart Libraries -->
+  <!-- Chart Libraries (optional) -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
   <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<!-- Chart Data Labels -->
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
 </head>
 <body>
   <nav id="topbar">
     <div class="menu-row">
-      <button class="menu-button" id="nav-dashboard">ড্যাশবোর্ড <span class="icon">📊</span></button>
-      <button class="menu-button" id="nav-forms">ফর্মস <span class="icon">📄</span></button>
-      <button class="menu-button" id="nav-submit">ট্রানজেকশন <span class="icon">💳</span></button>
-      <button class="menu-button" id="nav-filter">ফিল্টার <span class="icon">🔍</span></button>
-      <button class="menu-button active" id="nav-profile">প্রোফাইল <span class="icon">📍</span></button>
+      <button class="menu-button" id="nav-dashboard">ড্যাশবোর্ড 📊</button>
+      <button class="menu-button" id="nav-forms">ফর্মস 📄</button>
+      <button class="menu-button" id="nav-submit">ট্রানজেকশন 💳</button>
+      <button class="menu-button" id="nav-filter">ফিল্টার 🔍</button>
+      <button class="menu-button" id="nav-profile">প্রোফাইল 📍</button>
     </div>
   </nav>
 
-  <div id="sidebar" class="sidebar"></div>
-
   <main id="content">
-    <h2>প্রোফাইল তথ্য</h2>
+    <p>লোড হচ্ছে...</p>
   </main>
 
-  <script >
-    const menuButtons = document.querySelectorAll('.menu-button');
-    menuButtons.forEach(button =>
-      {
-        button.addEventListener('click', () => {
-        menuButtons.forEach(btn => btn.classList.remove('active')); // সব বাটন থেকে active মুছে ফেলো
-        button.classList.add('active'); // যেটাতে ক্লিক করা হয়েছে সেটাতে active দাও
-        });
-      });
-  </script>
+  <script src="main.js"></script>
 </body>
 </html>
