@@ -235,4 +235,15 @@ function loadProfileInfo() {
   content.innerHTML = `<h2>প্রোফাইল তথ্য</h2><p>এই অংশে ইউজারের প্রোফাইল তথ্য দেখাবে।</p>`;
 }
 
+document.addEventListener("DOMContentLoaded", () => {
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      transactionFilter();
+      renderForm();
+      loadDashboardSummary();
+    } else {
+      window.location.href = "login.html";
+    }
+  });
+});
 
