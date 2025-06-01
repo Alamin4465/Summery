@@ -748,9 +748,7 @@ function loadRecentTransactions(uid) {
     });
 }
 
-// main.js
-import { transactionFilter } from './monthday.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener("DOMContentLoaded", () => {
   transactionFilter();
 });
