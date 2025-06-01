@@ -142,3 +142,36 @@ canvas {
     width:800px;
     height: 380px;
 }
+.transaction-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+.transaction-table th,
+.transaction-table td {
+  border: 1px solid #ccc;
+  padding: 8px;
+  text-align: center;
+}
+.transaction-table th {
+  background-color: #f0f0f0;
+}
+.income-row {
+  background-color: #e0f8e0; /* হালকা সবুজ */
+  font-weight: bold;
+}
+
+.expense-row {
+  background-color: #fce0e0; /* হালকা লাল */
+  font-weight: bold;
+}
+
+.income-icon::before {
+  content: "💰 ";
+  color: green;
+}
+
+.expense-icon::before {
+  content: "💸 ";
+  color: red;
+}
