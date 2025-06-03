@@ -139,7 +139,13 @@ function loadRecentTransactions(uid) {
 }
 
 
-//Income ও Expense ক্যাটাগরি তালিকা (প্রয়োজন অনুযায়ী পরিবর্তন করো)
+// Bangla Number Format
+function toBanglaNumber(number) {
+  if (typeof number !== "number") number = parseFloat(number) || 0;
+  return number.toLocaleString('bn-BD', { maximumFractionDigits: 2 });
+}
+
+// Category Lists
 const incomeCategories = ["বেতন", "ব্যবসা", "অন্যান্য", "বাইক"];
 const expenseCategories = [
   "বাসা ভাড়া", "মোবাইল রিচার্জ", "বিদ্যুৎ বিল", "পরিবহন", "দোকান বিল",
@@ -147,7 +153,7 @@ const expenseCategories = [
   "ব্যক্তিগত", "অন্যান্য", "গাড়ির তেল", "নাস্তা", "খাওয়া"
 ];
 
-// ট্রানজেকশন লোড (ফিল্টার ও রিয়েলটাইম)
+// Transaction Load UI
 function loadTransactions() {
   const content = document.getElementById('content');
   content.innerHTML = `
@@ -172,9 +178,9 @@ function loadTransactions() {
       </table>
     </div>
     <div id="summary" style="margin-top: 20px; font-weight: bold;"></div>
+<div id="incomexpensescatagori"></div>
   `;
 
-  // ফিল্টার বাটনে ইভেন্ট লাগানো
   document.querySelectorAll('#filterButtons .filterBtn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('#filterButtons .filterBtn').forEach(b => b.classList.remove('active'));
@@ -187,7 +193,7 @@ function loadTransactions() {
   fetchTransactionsRealtime();
 }
 
-// Firestore থেকে রিয়েলটাইম ডেটা ফেচ ও রেন্ডার
+// Firestore থেকে রিয়েলটাইম ডেটা
 function fetchTransactionsRealtime() {
   if (unsubscribeTransaction) unsubscribeTransaction();
 
@@ -229,10 +235,13 @@ function fetchTransactionsRealtime() {
 
       renderSummary(allTransactions);
       setupEditDeleteHandlers();
+
+      // 🔥 এখানে চার্ট কল
+      renderIncomeExpenseCategoryChart(allTransactions, currentFilter);
     });
 }
 
-// মোট আয়/ব্যয়/ব্যালেন্স দেখানো
+// Summary
 function renderSummary(transactions) {
   const summaryDiv = document.getElementById('summary');
   const totalIncome = transactions.filter(t => t.type === "income").reduce((acc, t) => acc + parseFloat(t.amount || 0), 0);
@@ -241,16 +250,17 @@ function renderSummary(transactions) {
 
   let html = "";
   if (currentFilter === "all") {
-    html = `মোট আয়: ${toBanglaNumber(totalIncome)} টাকা | মোট ব্যয়: ${toBanglaNumber(totalExpense)} টাকা | বর্তমান ব্যালেন্স: ${toBanglaNumber(balance)} টাকা`;
+    html = `মোট আয়: ${toBanglaNumber(totalIncome)} টাকা | মোট ব্যয়: ${toBanglaNumber(totalExpense)} টাকা | ব্যালেন্স: ${toBanglaNumber(balance)} টাকা`;
   } else if (currentFilter === "income") {
     html = `মোট আয়: ${toBanglaNumber(totalIncome)} টাকা`;
-  } else if (currentFilter === "expense") {
+  } else {
     html = `মোট ব্যয়: ${toBanglaNumber(totalExpense)} টাকা`;
   }
+
   summaryDiv.innerHTML = html;
 }
 
-// Edit/Delete হ্যান্ডলার
+// Edit/Delete Setup
 function setupEditDeleteHandlers() {
   const tbody = document.querySelector("#transactionTable tbody");
 
@@ -264,7 +274,6 @@ function setupEditDeleteHandlers() {
 
       if (!data) return alert("ডাটা পাওয়া যায়নি!");
 
-      // Prompt দিয়ে ডাটা এডিট করা
       const newDate = prompt("তারিখ (YYYY-MM-DD):", data.date || "");
       if (newDate === null) return;
 
@@ -272,16 +281,15 @@ function setupEditDeleteHandlers() {
       if (newType === null || !["income", "expense"].includes(newType)) return alert("সঠিক টাইপ দিন");
 
       const categories = newType === "income" ? incomeCategories : expenseCategories;
-      const newCategory = prompt(`ক্যাটেগরি নির্বাচন করুন:\n${categories.join(", ")}`, data.category || "");
+      const newCategory = prompt(`ক্যাটেগরি:\n${categories.join(", ")}`, data.category || "");
       if (newCategory === null || !categories.includes(newCategory)) return alert("সঠিক ক্যাটেগরি দিন");
 
-      const newAmountStr = prompt("টাকার পরিমাণ লিখুন:", data.amount || "");
+      const newAmountStr = prompt("টাকার পরিমাণ:", data.amount || "");
       if (newAmountStr === null) return;
 
       const newAmount = parseFloat(newAmountStr);
       if (isNaN(newAmount)) return alert("সঠিক টাকার পরিমাণ দিন");
 
-      // ডকুমেন্ট আপডেট
       await docRef.update({
         date: newDate,
         type: newType,
@@ -297,7 +305,7 @@ function setupEditDeleteHandlers() {
   tbody.querySelectorAll(".deleteBtn").forEach(btn => {
     btn.onclick = async () => {
       const id = btn.dataset.id;
-      if (confirm("আপনি কি নিশ্চিতভাবে ডিলিট করতে চান?")) {
+      if (confirm("আপনি কি ডিলিট করতে চান?")) {
         const db = firebase.firestore();
         await db.collection("users").doc(currentUser.uid).collection("transactions").doc(id).delete();
       }
@@ -305,14 +313,134 @@ function setupEditDeleteHandlers() {
   });
 }
 
-  
-// Helper: Convert English number to Bangla
-function toBanglaNumber(input) {
-  const banglaDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
-  return input
-    .toString()
-    .split('')
-    .map(d => (/\d/.test(d) ? banglaDigits[parseInt(d)] : d))
-    .join('');
-}
+function renderIncomeExpenseCategoryChart(transactions, filterType = "all") {
+  function generateCategoryMap(transactions, filter, type) {
+    const map = {};
+    transactions.forEach(t => {
+      if ((filter === "all" || t.type === filter) && t.type === type) {
+        if (!map[t.category]) map[t.category] = 0;
+        map[t.category] += parseFloat(t.amount) || 0;
+      }
+    });
+    return map;
+  }
 
+  const incomeMap = generateCategoryMap(transactions, filterType, "income");
+  const expenseMap = generateCategoryMap(transactions, filterType, "expense");
+
+  const incomeCategories = Object.keys(incomeMap);
+  const incomeValues = Object.values(incomeMap);
+  const expenseCategories = Object.keys(expenseMap);
+  const expenseValues = Object.values(expenseMap);
+
+  const series = [...incomeValues, ...expenseValues];
+  const labels = [
+    ...incomeCategories.map(c => "আয়: " + c),
+    ...expenseCategories.map(c => "ব্যয়: " + c)
+  ];
+
+  const incomeColors = incomeValues.map((_, i) => `hsl(145, 60%, ${60 - i * 5}%)`);
+  const expenseColors = expenseValues.map((_, i) => `hsl(10, 70%, ${65 - i * 5}%)`);
+  const colors = [...incomeColors, ...expenseColors];
+
+  const totalIncome = incomeValues.reduce((a, b) => a + b, 0);
+  const totalExpense = expenseValues.reduce((a, b) => a + b, 0);
+
+  let totalLabel = "মোট";
+  let displayTotal = totalIncome - totalExpense;
+
+  if (filterType === "income") {
+    totalLabel = "মোট আয়";
+    displayTotal = totalIncome;
+  } else if (filterType === "expense") {
+    totalLabel = "মোট ব্যয়";
+    displayTotal = totalExpense;
+  }
+
+  const options = {
+    chart: {
+      type: 'donut',
+      height: 420,
+      toolbar: { show: false },
+      fontFamily: 'Noto Sans Bengali, Kalpurush, sans-serif'
+    },
+    series: series,
+    labels: labels,
+    colors: colors,
+    legend: {
+  position: 'bottom',
+  fontSize: '14px',
+  labels: {
+    colors: '#ffffff' // ✅ সাদা লেবেল
+  }
+},
+    dataLabels: {
+      enabled: true,
+      formatter: val => `${val.toFixed(1)}%`,
+      style: {
+        fontSize: '13px',
+        fontWeight: 'bold',
+        colors: ['#fff']  // ✅ এখানেই center text সাদা
+      }
+    },
+    tooltip: {
+      y: {
+        formatter: (value, { seriesIndex, w }) => {
+          const total = w.globals.seriesTotals.reduce((a, b) => a + b, 0);
+          const percent = ((value / total) * 100).toFixed(1);
+          return `৳ ${value.toLocaleString("bn-BD")} (${percent.toLocaleString("bn-BD")}%)`;
+        },
+        title: {
+          formatter: (seriesName) => `${seriesName}`
+        }
+      },
+      style: {
+        fontSize: '14px',
+        fontFamily: 'Noto Sans Bengali, Kalpurush, sans-serif'
+      }
+    },
+    plotOptions: {
+      pie: {
+        donut: {
+          size: '45%',
+          labels: {
+            show: true,
+            name: {
+              show: true,
+              color: '#ffffff',       // ✅ সেন্টার নাম সাদা
+              fontSize: '16px',
+              fontWeight: 'bold'
+            },
+            value: {
+              show: true,
+              color: '#ffffff',       // ✅ সেন্টার ভ্যালু সাদা
+              fontSize: '20px',
+              fontWeight: 'bold',
+              formatter: function (val) {
+                return `৳ ${parseFloat(val).toLocaleString("bn-BD")}`;
+              }
+            },
+            total: {
+              show: true,
+              label: totalLabel,
+              fontSize: '18px',
+              color: '#ffffff',       // ✅ সেন্টার টোটাল লেবেল সাদা
+              formatter: function () {
+                return `৳ ${displayTotal.toLocaleString("bn-BD")}`;
+              }
+            }
+          }
+        }
+      }
+    }
+  };
+
+  // রেন্ডার
+  if (window.chartInstance) {
+    chartInstance.updateOptions(options);
+    chartInstance.updateSeries(series);
+  } else {
+    window.chartInstance = new ApexCharts(document.querySelector("#incomexpensescatagori"), options);
+    chartInstance.render();
+  }
+}
