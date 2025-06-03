@@ -77,6 +77,10 @@ body {
   background: rgba(0, 255, 150, 0.9);
   box-shadow: 0 0 15px rgba(0, 255, 150, 0.8);
 }
+.content{
+    background: rgba(255, 255, 255, 0.4);
+    width:800px;
+}
 
 .titel {
   border: 2px solid rgba(0, 123, 255, 0.5);
@@ -142,30 +146,110 @@ canvas {
     width:800px;
     height: 380px;
 }
-.transaction-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 10px;
+
+
+
+/* Filter বাটন */
+#filterButtons {
+  margin-bottom: 15px;
 }
-.transaction-table th,
-.transaction-table td {
-  border: 1px solid #ccc;
-  padding: 8px;
+
+.filterBtn {
+  padding: 8px 16px;
+  margin-right: 10px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 14px;
+  background-color: rgba(255, 255, 255, 0.4);
+  transition: background-color 0.3s ease;
+}
+
+.filterBtn:hover {
+  background-color: #ccc;
+}
+
+.filterBtn.active {
+  background-color: #007bff;
+  color: white;
+}
+
+/* টেবিল ডিজাইন */
+#transactionTable {
+  width:800px;
+  border-collapse: collapse;
+  background-color: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+#transactionTable thead {
+  border: 2px solid rgba(0, 123, 255, 0.5);
+  background: rgba(0, 0, 255, 0.1);
+  color: white; /* লেখার রঙ সাদা */
+  text-align: center; /* লেখাকে মাঝখানে আনো */
+  border-radius: 10px; /* কোণ গুলো গোল করা */
+  margin: 20px auto; /* মাঝখানে আনো এবং কিছু ফাঁকা জায়গা রাখো */
+  font-size: 24px; /* লেখার আকার */
+  font-weight: bold;
+}
+
+#transactionTable th,
+#transactionTable td {
+  padding: 10px 12px;
+  border: 1px solid #ddd;
   text-align: center;
 }
-.transaction-table th {
-  background-color: #f0f0f0;
-}
+
+/* আয় হলে সবুজ transparent background */
 .income-row {
-  background-color: #e0f8e0; /* হালকা সবুজ */
-  font-weight: bold;
+  background-color: rgba(0, 128, 0, 0.1); /* হালকা সবুজ */
+    color:green;
 }
 
+/* ব্যয় হলে লাল transparent background */
 .expense-row {
-  background-color: #fce0e0; /* হালকা লাল */
-  font-weight: bold;
+  background-color: rgba(255, 0, 0, 0.1); /* হালকা লাল */
+    color:red;
 }
 
+/* Edit/Delete বাটন */
+.editBtn,
+.deleteBtn {
+  padding: 6px 10px;
+  margin: 2px;
+  font-size: 13px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.editBtn {
+  background-color: #28a745; /* সবুজ */
+  color: white;
+}
+
+.deleteBtn {
+  background-color: #dc3545; /* লাল */
+  color: white;
+}
+
+.editBtn:hover {
+  background-color: #218838;
+}
+
+.deleteBtn:hover {
+  background-color: #c82333;
+}
+
+/* Summary */
+#summary {
+  font-size: 16px;
+  background-color: #f1f1f1;
+  padding: 10px;
+  border-radius: 6px;
+  color: #333;
+}
 .income-icon::before {
   content: "💰 ";
   color: green;
@@ -175,3 +259,4 @@ canvas {
   content: "💸 ";
   color: red;
 }
+
