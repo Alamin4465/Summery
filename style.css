@@ -175,43 +175,6 @@ canvas {
   color: white;
 }
 
-/* টেবিল ডিজাইন */
-#transactionTable {
-  width:800px;
-  border-collapse: collapse;
-  background-color: rgba(255, 255, 255, 0.4);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-#transactionTable thead {
-  border: 2px solid rgba(0, 123, 255, 0.5);
-  background: rgba(0, 0, 255, 0.1);
-  color: white; /* লেখার রঙ সাদা */
-  text-align: center; /* লেখাকে মাঝখানে আনো */
-  border-radius: 10px; /* কোণ গুলো গোল করা */
-  margin: 20px auto; /* মাঝখানে আনো এবং কিছু ফাঁকা জায়গা রাখো */
-  font-size: 24px; /* লেখার আকার */
-  font-weight: bold;
-}
-
-#transactionTable th,
-#transactionTable td {
-  padding: 10px 12px;
-  border: 1px solid #ddd;
-  text-align: center;
-}
-
-/* আয় হলে সবুজ transparent background */
-.income-row {
-  background-color: rgba(0, 128, 0, 0.1); /* হালকা সবুজ */
-    color:green;
-}
-
-/* ব্যয় হলে লাল transparent background */
-.expense-row {
-  background-color: rgba(255, 0, 0, 0.1); /* হালকা লাল */
-    color:red;
-}
 
 /* Edit/Delete বাটন */
 .editBtn,
@@ -242,21 +205,113 @@ canvas {
   background-color: #c82333;
 }
 
-/* Summary */
-#summary {
+/* Titles */
+h2.titel, h3 {
+  margin-bottom: 15px;
+}
+/* ফর্ম কনটেইনার */
+#transactionForm {
+  border-radius: 12px;
+  padding: 20px;
+  max-width: 400px;
+  margin: 40px 0 40px 40px; /* বাম দিকে 40px */
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+
+/* ইনপুট, সিলেক্ট ও বোতাম */
+.form-input,
+.form-button {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 12px;
+  border: none;
+  border-radius: 8px;
   font-size: 16px;
-  background-color: #f1f1f1;
-  padding: 10px;
-  border-radius: 6px;
+  box-sizing: border-box;
+    
+}
+
+/* ইনপুট ও সিলেক্ট ফিল্ডের স্টাইল */
+.form-input {
+  background-color: rgba(255, 255, 255, 0.8);
   color: #333;
 }
+
+/* বাটনের স্টাইল */
+.form-button {
+  background-color: #4CAF50;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.form-button:hover {
+  background-color: #45a049;
+}
+
+
+/* Table Styles */
+.transaction-table,
+#transactionTable {
+  width: 100%;
+  margin-top: 20px;
+  border-collapse: collapse;
+  background-color: rgba(255, 255, 255, 0.4);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.transaction-table th,
+.transaction-table td,
+#transactionTable th,
+#transactionTable td {
+  border: 1px solid #ddd;
+  padding: 12px 15px;
+  text-align: left;
+}
+
+.transaction-table th,
+#transactionTable th {
+  border: 2px solid rgba(0, 123, 255, 0.5);
+  background: rgba(0, 0, 255, 0.1);
+  color: white; /* লেখার রঙ সাদা */
+  text-align: center; /* লেখাকে মাঝখানে আনো */
+  border-radius: 10px; /* কোণ গুলো গোল করা */
+  margin: 20px auto; /* মাঝখানে আনো এবং কিছু ফাঁকা জায়গা রাখো */
+  font-size: 24px; /* লেখার আকার */
+  font-weight: bold;
+}
+
+.income-row {
+  background-color: rgba(0, 128, 0, 0.1); /* হালকা সবুজ */
+    color:green;
+    font-weight: bold;
+}
+
+/* ব্যয় হলে লাল transparent background */
+.expense-row {
+  background-color: rgba(255, 0, 0, 0.1); /* হালকা লাল */
+    color:red;
+    font-weight: bold;
+}
+
 .income-icon::before {
   content: "💰 ";
   color: green;
+    
+    
 }
 
 .expense-icon::before {
   content: "💸 ";
   color: red;
+    font-weight: bold;
 }
 
+
+/* Chart Section */
+#incomexpensescatagori {
+  margin-top: 30px;
+}
