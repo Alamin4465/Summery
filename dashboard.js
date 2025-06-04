@@ -366,4 +366,100 @@ function drawFuelGauge(savingRate) {
   const chart = new ApexCharts(document.querySelector("#fuel-gauge"), options);
   chart.render();
 }
+ 
+function loadBarChartByDate() {
+  const db = firebase.firestore();
+  db.collection("users").doc(currentUser.uid).collection("transactions")
+    .get()
+    .then(snapshot => {
+      const dateWise = {};
 
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const date = data.date;
+        const type = data.type;
+        const amount = parseFloat(data.amount || 0);
+
+        if (!dateWise[date]) {
+          dateWise[date] = { income: 0, expense: 0 };
+        }
+
+        if (type === "income") {
+          dateWise[date].income += amount;
+        } else if (type === "expense") {
+          dateWise[date].expense += amount;
+        }
+      });
+
+      const sortedDates = Object.keys(dateWise).sort();
+
+      const incomeData = sortedDates.map(date => dateWise[date].income);
+      const expenseData = sortedDates.map(date => dateWise[date].expense);
+      const balanceData = sortedDates.map(date => dateWise[date].income - dateWise[date].expense);
+
+      const ctx = document.getElementById("barChartByDate").getContext("2d");
+
+      new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: sortedDates,
+          datasets: [
+            {
+              label: "আয়",
+              data: incomeData,
+              backgroundColor: "#4caf50"
+            },
+            {
+              label: "ব্যয়",
+              data: expenseData,
+              backgroundColor: "#f44336"
+            },
+            {
+              label: "মোট টাকা",
+              data: balanceData,
+              backgroundColor: "#2196f3"
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return context.dataset.label + ": ৳" + toBanglaNumber(context.parsed.y);
+                }
+              }
+            },
+            legend: {
+              labels: {
+                font: { size: 18 },
+                color: "#ffffff"
+              }
+            }
+          },
+          scales: {
+            x: {
+              ticks: {
+                color: "#ffffff",
+                font: { size: 16 }
+              },
+              grid: { display: false }
+            },
+            y: {
+              beginAtZero: true,
+              ticks: {
+                color: "#ffffff",
+                callback: function(value) {
+                  return toBanglaNumber(value) + ' টাকা';
+                }
+              },
+              grid: {
+                color: 'rgba(255,255,255,0.2)'
+              }
+            }
+          }
+        }
+      });
+    });
+}
