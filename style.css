@@ -310,8 +310,116 @@ h2.titel, h3 {
     font-weight: bold;
 }
 
-
 /* Chart Section */
 #incomexpensescatagori {
   margin-top: 30px;
+}
+
+/* মাস ও তারিখ ফিল্টার স্টাইল */
+.Filter-monthday {
+  margin-top: 30px;
+  background: #f9f9f9;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+
+.monthday h2 {
+  text-align: center; /* মাঝে রাখার জন্য */
+  color: #007bff;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.monthday label {
+  font-weight: bold;
+  margin-right: 10px;
+}
+
+.monthday input {
+  padding: 10px;
+  margin: 5px 10px 15px 0;
+  border: 1px solid #007bff;
+  border-radius: 6px;
+  font-size: 16px;
+}
+
+#resetFilterBtn {
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+#resetFilterBtn:hover {
+  background-color: red;
+}
+
+/* ফিল্টারড টেবিল ডিজাইন */
+.monthdaytable table,
+.monthly-summary table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    font-weight: bold;
+}
+
+.monthdaytable th,
+.monthdaytable td,
+.monthly-summary td {
+  border: 1px solid #ccc;
+  padding: 12px;
+  text-align: center;
+    font-weight: bold;
+    
+
+}
+
+.#monthlySummary table {
+  border-collapse: collapse;
+  width: 100%;
+  font-family: Arial, sans-serif;
+  text-align: center;
+    font-weight: bold;
+}
+
+#monthlySummary th,
+#monthlySummary td {
+  border: 2px solid #000;
+  padding: 8px;
+    font-weight: bold;
+    font-size: 1.3em;
+}
+
+#monthlySummary thead tr {
+  background-color: #663399;
+  color: orange;
+    font-weight: bold;
+}
+
+#monthlySummary tbody tr:nth-child(1) td {
+  font-weight: bold;
+    font-size: 1.3em;
+}
+
+#monthlySummary tbody tr:nth-child(1) td:nth-child(2) {
+  color: red;
+    font-weight: bold;
+}
+
+#monthlySummary tbody tr:nth-child(3) td:nth-child(4),
+#monthlySummary tbody tr:nth-child(3) td:nth-child(5) {
+  color: red;
+    font-weight: bold;
+}
+
+#monthlySummary tbody tr:last-child {
+  background-color: #cc3300;
+  color: white;
+  font-weight: bold;
 }
