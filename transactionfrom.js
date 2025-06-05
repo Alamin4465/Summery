@@ -226,10 +226,6 @@ function loadTransactions() {
     </div>
     <div id="summary" style="margin-top: 20px; font-weight: bold;"></div>
 <div id="incomexpensescatagori"></div>
-  <div class="chart-section">
-  <h3>তারিখ অনুযায়ী ইনকাম ও ব্যয় (Bar Chart)</h3>
-  <canvas id="barChartByDate"></canvas>
-</div>
   `;
 
   document.querySelectorAll('#filterButtons .filterBtn').forEach(btn => {
@@ -289,7 +285,7 @@ function fetchTransactionsRealtime() {
 
       // 🔥 এখানে চার্ট কল
       renderIncomeExpenseCategoryChart(allTransactions, currentFilter);
-      loadBarChartByDate();
+     
     });
 }
 
