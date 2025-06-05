@@ -1,49 +1,4 @@
-let currentFilter = "all";
-let allTransactions = [];
-let currentUser = null;
-let unsubscribeTransaction = null;
 
-// Auth Check
-firebase.auth().onAuthStateChanged(user => {
-  if (!user) {
-    window.location.href = "login.html";
-  } else {
-    currentUser = user;
-    userId = user.uid;
-    activate(document.getElementById('nav-dashboard'), 'ড্যাশবোর্ড');
-  }
-});
-
-// Menu Events
-document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('nav-dashboard')?.addEventListener('click', () => activate(document.getElementById('nav-dashboard'), 'ড্যাশবোর্ড'));
-  document.getElementById('nav-forms')?.addEventListener('click', () => activate(document.getElementById('nav-forms'), 'ফ্রমস'));
-  document.getElementById('nav-submit')?.addEventListener('click', () => activate(document.getElementById('nav-submit'), 'ট্রানজেকশন'));
-  document.getElementById('nav-filter')?.addEventListener('click', () => activate(document.getElementById('nav-filter'), 'ফিল্টার'));
-  document.getElementById('nav-profile')?.addEventListener('click', () => activate(document.getElementById('nav-profile'), 'প্রোফাইল তথ্য'));
-});
-
-// Section Activation
-function activate(button, sectionName) {
-  document.querySelectorAll('.menu-button').forEach(btn => btn.classList.remove('active'));
-  button.classList.add('active');
-
-  const content = document.getElementById('content');
-
-  if (sectionName === 'প্রোফাইল তথ্য') {
-    loadProfileInfo();
-  } else if (sectionName === 'ড্যাশবোর্ড') {
-    loadDashboardSummary();
-  } else if (sectionName === 'ফ্রমস') {
-    renderForm();
-  } else if (sectionName === 'ফিল্টার') {
-    transactionFilter();
-  } else if (sectionName === 'ট্রানজেকশন') {
-    loadTransactions();
-  } else {
-    content.innerHTML = `<p>এই অংশটি এখনো তৈরি হয়নি।</p>`;
-  }
-}
 
 function submitHandler(e) {
   e.preventDefault();
