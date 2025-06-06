@@ -1,4 +1,4 @@
-let currentFilter = "all";
+ let currentFilter = "all";
 let allTransactions = [];
 let currentUser = null;
 let unsubscribeTransaction = null;
@@ -50,62 +50,57 @@ function activate(button, sectionName) {
   }
 }
 
-// 🔹 Profile Section CSS
+// 🔹 Profile Style
 const profileStyle = document.createElement('style');
 profileStyle.textContent = `
 .change-password-section {
-  margin-top: 30px;
-  text-align: center;
+  margin-top: 30px; text-align: center;
 }
-
 .change-password-section input {
-  padding: 8px 12px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  margin: 10px 0;
-  font-size: 16px;
-  width: 100%;
-  max-width: 300px;
+  padding: 8px 12px; border-radius: 6px; border: 1px solid #ccc;
+  margin: 10px 0; font-size: 16px; width: 100%; max-width: 300px;
 }
-
 .change-password-section button {
-  padding: 8px 14px;
-  border: none;
-  border-radius: 6px;
-  background-color: #ffc107;
-  color: #000;
-  font-size: 16px;
-  cursor: pointer;
+  padding: 8px 14px; border: none; border-radius: 6px;
+  background-color: #ffc107; color: #000; font-size: 16px; cursor: pointer;
 }
-
 .change-password-section button:hover {
   background-color: #e0a800;
 }
 .profile-box {
-  max-width: 500px;
-  margin: 30px auto;
-  padding: 20px;
-  background-color: rgba(255, 255, 255, 0.2);
-  border-radius: 12px;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  font-family: 'SolaimanLipi', sans-serif;
-  color: #fff;
+  max-width: 500px; margin: 30px auto; padding: 20px;
+  background-color: rgba(255, 255, 255, 0.2); border-radius: 12px;
+  backdrop-filter: blur(10px); box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  font-family: 'SolaimanLipi', sans-serif; color: #fff;
 }
-.profile-box h2 { text-align: center; margin-bottom: 20px; font-size: 24px; font-weight: bold; }
-.profile-box .field-label { font-weight: bold; margin-top: 15px; margin-bottom: 5px; }
-.profile-box .value { padding: 8px 12px; background-color: rgba(255,255,255,0.1); border-radius: 6px; margin-bottom: 10px; }
+.profile-box h2 {
+  text-align: center; margin-bottom: 20px; font-size: 24px; font-weight: bold;
+}
+.profile-box .field-label {
+  font-weight: bold; margin-top: 15px; margin-bottom: 5px;
+}
+.profile-box .value {
+  padding: 8px 12px; background-color: rgba(255,255,255,0.1);
+  border-radius: 6px; margin-bottom: 10px;
+}
 .profile-box input, .profile-box select {
   width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid #ccc;
   margin-bottom: 15px; font-size: 16px; background-color: rgba(255,255,255,0.1); color: #fff;
 }
-.profile-box .buttons { display: flex; justify-content: space-between; margin-top: 20px; }
+.profile-box .buttons {
+  display: flex; justify-content: space-between; margin-top: 20px;
+}
 .profile-box button {
   flex: 1; margin: 0 5px; padding: 10px 12px; border: none; border-radius: 6px;
   background-color: #007bff; color: white; font-size: 16px; cursor: pointer;
 }
-.profile-box button:hover { background-color: #0056b3; }
-#message { margin-top: 15px; text-align: center; font-weight: bold; font-size: 15px; color: lightgreen; }
+.profile-box button:hover {
+  background-color: #0056b3;
+}
+#message {
+  margin-top: 15px; text-align: center; font-weight: bold;
+  font-size: 15px; color: lightgreen;
+}
 .logout-btn {
   display: block; margin: 25px auto 0; padding: 10px 16px; background-color: #dc3545;
   color: white; border: none; border-radius: 6px; font-size: 16px; cursor: pointer;
@@ -151,14 +146,16 @@ function loadProfileInfo() {
       </div>
       <div id="message"></div>
       <button id="logout-button" class="logout-btn">লগআউট</button>
-  <div class="change-password-section">
-  <button id="togglePasswordFormBtn">পাসওয়ার্ড পরিবর্তন করুন</button>
-  <div id="passwordForm" style="display:none; margin-top: 15px;">
-    <input type="password" id="newPassword" placeholder="নতুন পাসওয়ার্ড লিখুন" />
-    <button id="changePasswordBtn">সেট করুন</button>
-    <div id="passwordMessage" style="margin-top:10px; font-size: 14px;"></div>
-  </div>
-</div>
+
+      <div class="change-password-section">
+        <button id="togglePasswordFormBtn">🔐 পাসওয়ার্ড পরিবর্তন করুন</button>
+        <div id="passwordForm" style="display: none;">
+          <input type="password" id="newPassword" placeholder="নতুন পাসওয়ার্ড দিন" />
+          <br />
+          <button id="changePasswordBtn">আপডেট করুন</button>
+          <div id="passwordMessage"></div>
+        </div>
+      </div>
     </div>
   `;
 
@@ -166,25 +163,24 @@ function loadProfileInfo() {
   if (!user) return;
 
   const uid = user.uid;
-  firebase.firestore().collection("users").doc(uid).get()
-    .then(doc => {
-      if (doc.exists) {
-        const { name = "", email = user.email, gender = "", dob = "" } = doc.data();
+  firebase.firestore().collection("users").doc(uid).get().then(doc => {
+    if (doc.exists) {
+      const { name = "", email = user.email, gender = "", dob = "" } = doc.data();
 
-        document.getElementById("nameDisplay").innerText = name;
-        document.getElementById("emailDisplay").innerText = email;
-        document.getElementById("genderDisplay").innerText = gender;
-        document.getElementById("dobDisplay").innerText = dob;
+      document.getElementById("nameDisplay").innerText = name;
+      document.getElementById("emailDisplay").innerText = email;
+      document.getElementById("genderDisplay").innerText = gender;
+      document.getElementById("dobDisplay").innerText = dob;
 
-        document.getElementById("nameInput").value = name;
-        document.getElementById("genderInput").value = gender;
-        document.getElementById("dobInput").value = dob;
-      }
-    });
+      document.getElementById("nameInput").value = name;
+      document.getElementById("genderInput").value = gender;
+      document.getElementById("dobInput").value = dob;
+    }
+  });
 
+  // Edit, Save, Cancel
   document.getElementById("editBtn").addEventListener("click", () => toggleEditMode(true));
   document.getElementById("cancelBtn").addEventListener("click", () => toggleEditMode(false));
-
   document.getElementById("saveBtn").addEventListener("click", () => {
     const name = document.getElementById("nameInput").value.trim();
     const gender = document.getElementById("genderInput").value;
@@ -201,10 +197,45 @@ function loadProfileInfo() {
       });
   });
 
+  // Logout
   document.getElementById("logout-button").addEventListener("click", () => {
     firebase.auth().signOut().then(() => {
       window.location.href = "login.html";
     });
+  });
+
+  // Toggle Password Form
+  document.getElementById("togglePasswordFormBtn").addEventListener("click", () => {
+    const form = document.getElementById("passwordForm");
+    form.style.display = form.style.display === "none" ? "block" : "none";
+    document.getElementById("passwordMessage").innerText = "";
+  });
+
+  // Change Password Logic
+  document.getElementById("changePasswordBtn").addEventListener("click", () => {
+    const newPassword = document.getElementById("newPassword").value.trim();
+    const messageBox = document.getElementById("passwordMessage");
+
+    if (newPassword.length < 6) {
+      messageBox.style.color = "red";
+      messageBox.innerText = "পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে!";
+      return;
+    }
+
+    firebase.auth().currentUser.updatePassword(newPassword)
+      .then(() => {
+        messageBox.style.color = "lightgreen";
+        messageBox.innerText = "পাসওয়ার্ড পরিবর্তন সফল হয়েছে!";
+        document.getElementById("newPassword").value = "";
+      })
+      .catch(error => {
+        messageBox.style.color = "red";
+        if (error.code === 'auth/requires-recent-login') {
+          messageBox.innerText = "অনুগ্রহ করে আবার লগইন করে চেষ্টা করুন।";
+        } else {
+          messageBox.innerText = "পাসওয়ার্ড পরিবর্তনে সমস্যা হয়েছে!";
+        }
+      });
   });
 }
 
@@ -221,39 +252,6 @@ function toggleEditMode(enable) {
   document.getElementById("saveBtn").style.display = enable ? "inline-block" : "none";
   document.getElementById("cancelBtn").style.display = enable ? "inline-block" : "none";
 }
-// Toggle Password Change Form
-document.getElementById("togglePasswordFormBtn").addEventListener("click", () => {
-  const form = document.getElementById("passwordForm");
-  form.style.display = form.style.display === "none" ? "block" : "none";
-  document.getElementById("passwordMessage").innerText = "";
-});
-
-// Handle Password Change
-document.getElementById("changePasswordBtn").addEventListener("click", () => {
-  const newPassword = document.getElementById("newPassword").value.trim();
-  const messageBox = document.getElementById("passwordMessage");
-
-  if (newPassword.length < 6) {
-    messageBox.style.color = "red";
-    messageBox.innerText = "পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে!";
-    return;
-  }
-
-  firebase.auth().currentUser.updatePassword(newPassword)
-    .then(() => {
-      messageBox.style.color = "lightgreen";
-      messageBox.innerText = "পাসওয়ার্ড পরিবর্তন সফল হয়েছে!";
-      document.getElementById("newPassword").value = "";
-    })
-    .catch(error => {
-      messageBox.style.color = "red";
-      if (error.code === 'auth/requires-recent-login') {
-        messageBox.innerText = "অনুগ্রহ করে আবার লগইন করে চেষ্টা করুন।";
-      } else {
-        messageBox.innerText = "পাসওয়ার্ড পরিবর্তনে সমস্যা হয়েছে!";
-      }
-    });
-});
 
 document.addEventListener("DOMContentLoaded", () => {
   onAuthStateChanged(auth, (user) => {
