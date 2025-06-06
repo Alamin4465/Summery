@@ -2,295 +2,257 @@
 <html lang="bn">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>প্রোফাইল তথ্য</title>
-
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-  <script src="firebase-config.js"></script>
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>নিবন্ধন</title>
+  <link rel="stylesheet" href="style.css" />
   <style>
-    * {
-      margin: 0; padding: 0; box-sizing: border-box;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-    body {
-      background: radial-gradient(circle at top right, #a1c4fd, #c2e9fb);
-      min-height: 100vh;
-      display: flex; justify-content: center; align-items: center;
-      padding: 20px;
-    }
-    .profile-box {
-      background: white;
-      padding: 40px 30px;
-      border-radius: 14px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-      width: 100%;
-      max-width: 400px;
-    }
-    .profile-box h2 {
-      text-align: center;
-      color: #2d3436;
-      margin-bottom: 25px;
-      font-size: 1.8rem;
-    }
-    .field-label {
-      font-weight: 700;
-      margin-top: 18px;
-      color: #2d3436;
-    }
-    .value, input, select {
-      margin-top: 8px;
-      font-size: 1rem;
-      width: 100%;
-    }
-    .value {
-      background: #f0f0f0;
-      padding: 12px 15px;
-      border-radius: 8px;
-      color: #636e72;
-      user-select: none;
-    }
-    input, select {
-      padding: 12px 15px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      display: none;
-      transition: border-color 0.3s ease;
-    }
-    input:focus, select:focus {
-      border-color: #0984e3;
-      outline: none;
-      box-shadow: 0 0 6px rgba(9,132,227,0.3);
-      display: block;
-    }
-    .buttons {
-      margin-top: 28px;
-      display: flex;
-      justify-content: center;
-      gap: 12px;
-    }
-    button {
-      flex: 1;
-      padding: 14px 0;
-      font-size: 1rem;
-      font-weight: 700;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-      color: white;
-    }
-    #editBtn {
-      background-color: #0984e3;
-    }
-    #editBtn:hover {
-      background-color: #0652dd;
-    }
-    #saveBtn {
-      background-color: #00b894;
-      display: none;
-    }
-    #saveBtn:hover {
-      background-color: #019875;
-    }
-    #cancelBtn {
-      background-color: #d63031;
-      display: none;
-    }
-    #cancelBtn:hover {
-      background-color: #b4251e;
-    }
-    #message {
-      margin-top: 18px;
-      text-align: center;
-      font-weight: 700;
-    }
-    #message.error {
-      color: #d63031;
-    }
-    #message.success {
-      color: #00b894;
-    }
+    .error { color: red; font-size: 0.9em; }
+    input.valid, select.valid { border: 2px solid green; }
+    input.invalid, select.invalid { border: 2px solid red; }
+    form { max-width: 400px; margin: auto; padding: 20px; background: #f4f4f4; border-radius: 10px; }
+    input, select, button { width: 100%; padding: 10px; margin: 10px 0; }
+    button:disabled { background: #aaa; }
   </style>
 </head>
 <body>
 
-  <div class="profile-box">
-    <h2>প্রোফাইল তথ্য</h2>
+  <h2 style="text-align: center;">নিবন্ধন ফর্ম</h2>
+  <form id="registerForm">
+    <input type="text" id="name" placeholder="নাম" required />
 
-    <label class="field-label" for="nameInput">নাম:</label>
-    <div class="value" id="nameDisplay">লোড হচ্ছে...</div>
-    <input type="text" id="nameInput" />
+    <input type="email" id="email" placeholder="ইমেইল" required />
+    <span id="emailStatus"></span><span id="emailError" class="error"></span>
 
-    <label class="field-label">ইমেইল:</label>
-    <div class="value" id="emailDisplay">লোড হচ্ছে...</div>
+    <input type="password" id="password" placeholder="পাসওয়ার্ড" required />
+    <span id="passStatus"></span><span id="passError" class="error"></span>
 
-    <label class="field-label" for="genderInput">জেন্ডার:</label>
-    <div class="value" id="genderDisplay">লোড হচ্ছে...</div>
-    <select id="genderInput">
-      <option value="">-- নির্বাচন করুন --</option>
-      <option value="পুরুষ">পুরুষ</option>
-      <option value="মহিলা">মহিলা</option>
-      <option value="অন্যান্য">অন্যান্য</option>
+    <input type="password" id="confirmPassword" placeholder="পুনরায় পাসওয়ার্ড" required />
+    <span id="confirmStatus"></span><span id="confirmError" class="error"></span>
+
+    <input type="date" id="dob" required />
+    <span id="dobError" class="error"></span>
+
+    <select id="gender" required>
+      <option value="">লিঙ্গ নির্বাচন করুন</option>
+      <option value="male">পুরুষ</option>
+      <option value="female">নারী</option>
+      <option value="other">অন্যান্য</option>
     </select>
+    <span id="genderError" class="error"></span>
 
-    <label class="field-label" for="ageInput">বয়স:</label>
-    <div class="value" id="ageDisplay">লোড হচ্ছে...</div>
-    <input type="number" id="ageInput" min="1" max="150" />
+    <button type="submit" id="submitBtn" disabled>নিবন্ধন</button>
+    <p id="formMessage"></p>
+  </form>
 
-    <div class="buttons">
-      <button id="editBtn">এডিট করুন</button>
-      <button id="saveBtn">সংরক্ষণ করুন</button>
-      <button id="cancelBtn">বাতিল করুন</button>
-    </div>
+  <!-- Firebase SDK -->
+  <script type="module">
+    // Import Firebase modules
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+    import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
 
-    <div id="message"></div>
-  </div>
+    // Your Firebase config
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
 
-  <script>
-    const db = firebase.firestore();
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
-    const nameDisplay = document.getElementById('nameDisplay');
-    const emailDisplay = document.getElementById('emailDisplay');
-    const genderDisplay = document.getElementById('genderDisplay');
-    const ageDisplay = document.getElementById('ageDisplay');
+    // DOM elements
+    const form = document.getElementById('registerForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const formMessage = document.getElementById('formMessage');
 
-    const nameInput = document.getElementById('nameInput');
-    const genderInput = document.getElementById('genderInput');
-    const ageInput = document.getElementById('ageInput');
+    const nameInput = document.getElementById('name');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const confirmPasswordInput = document.getElementById('confirmPassword');
+    const dobInput = document.getElementById('dob');
+    const genderSelect = document.getElementById('gender');
 
-    const editBtn = document.getElementById('editBtn');
-    const saveBtn = document.getElementById('saveBtn');
-    const cancelBtn = document.getElementById('cancelBtn');
+    const emailStatus = document.getElementById('emailStatus');
+    const emailError = document.getElementById('emailError');
+    const passStatus = document.getElementById('passStatus');
+    const passError = document.getElementById('passError');
+    const confirmStatus = document.getElementById('confirmStatus');
+    const confirmError = document.getElementById('confirmError');
+    const dobError = document.getElementById('dobError');
+    const genderError = document.getElementById('genderError');
 
-    const messageDiv = document.getElementById('message');
-
-    let currentUser = null;
-    let userData = null;
-
-    function showMessage(text, isError = false) {
-      messageDiv.textContent = text;
-      messageDiv.className = isError ? 'error' : 'success';
+    function setValid(input, statusEl, errorEl) {
+      input.classList.add('valid');
+      input.classList.remove('invalid');
+      if (statusEl) statusEl.textContent = '✓';
+      if (errorEl) errorEl.textContent = '';
     }
 
-    function setDisplayMode() {
-      nameDisplay.style.display = 'block';
-      emailDisplay.style.display = 'block';
-      genderDisplay.style.display = 'block';
-      ageDisplay.style.display = 'block';
-
-      nameInput.style.display = 'none';
-      genderInput.style.display = 'none';
-      ageInput.style.display = 'none';
-
-      editBtn.style.display = 'inline-block';
-      saveBtn.style.display = 'none';
-      cancelBtn.style.display = 'none';
-
-      messageDiv.textContent = '';
+    function setInvalid(input, statusEl, errorEl, message) {
+      input.classList.add('invalid');
+      input.classList.remove('valid');
+      if (statusEl) statusEl.textContent = '✗';
+      if (errorEl) errorEl.textContent = message;
     }
 
-    function setEditMode() {
-      nameDisplay.style.display = 'none';
-      emailDisplay.style.display = 'block'; // email readonly
-      genderDisplay.style.display = 'none';
-      ageDisplay.style.display = 'none';
-
-      nameInput.style.display = 'block';
-      genderInput.style.display = 'block';
-      ageInput.style.display = 'block';
-
-      editBtn.style.display = 'none';
-      saveBtn.style.display = 'inline-block';
-      cancelBtn.style.display = 'inline-block';
-
-      messageDiv.textContent = '';
-    }
-
-    firebase.auth().onAuthStateChanged(async (user) => {
-      if (!user) {
-        window.location.href = 'index.html';
-        return;
+    function validateEmail() {
+      const val = emailInput.value.trim();
+      if (!val) {
+        setInvalid(emailInput, emailStatus, emailError, 'ইমেইল প্রয়োজন');
+        return false;
       }
-      currentUser = user;
-      emailDisplay.textContent = user.email;
+      const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!regex.test(val)) {
+        setInvalid(emailInput, emailStatus, emailError, 'সঠিক ইমেইল লিখুন');
+        return false;
+      }
+      setValid(emailInput, emailStatus, emailError);
+      return true;
+    }
 
-      try {
-        const doc = await db.collection('users').doc(user.uid).get();
-        if (doc.exists) {
-          userData = doc.data();
-        } else {
-          userData = {};
+    function validatePassword() {
+      const val = passwordInput.value;
+      if (val.length < 6) {
+        setInvalid(passwordInput, passStatus, passError, 'পাসওয়ার্ড কমপক্ষে ৬ অক্ষর');
+        return false;
+      }
+      setValid(passwordInput, passStatus, passError);
+      return true;
+    }
+
+    function validateConfirmPassword() {
+      const val = confirmPasswordInput.value;
+      if (val !== passwordInput.value) {
+        setInvalid(confirmPasswordInput, confirmStatus, confirmError, 'পাসওয়ার্ড মেলেনি');
+        return false;
+      }
+      setValid(confirmPasswordInput, confirmStatus, confirmError);
+      return true;
+    }
+
+    function validateDob() {
+      const val = dobInput.value;
+      if (!val) {
+        dobError.textContent = 'জন্মতারিখ দিন';
+        dobInput.classList.add('invalid');
+        dobInput.classList.remove('valid');
+        return false;
+      }
+      const selectedDate = new Date(val);
+      const today = new Date();
+      if (selectedDate > today) {
+        dobError.textContent = 'ভবিষ্যতের জন্মতারিখ গ্রহণযোগ্য নয়';
+        dobInput.classList.add('invalid');
+        dobInput.classList.remove('valid');
+        return false;
+      }
+      dobError.textContent = '';
+      dobInput.classList.add('valid');
+      dobInput.classList.remove('invalid');
+      return true;
+    }
+
+    function validateGender() {
+      if (!genderSelect.value) {
+        genderError.textContent = 'লিঙ্গ নির্বাচন করুন';
+        genderSelect.classList.add('invalid');
+        genderSelect.classList.remove('valid');
+        return false;
+      }
+      genderError.textContent = '';
+      genderSelect.classList.add('valid');
+      genderSelect.classList.remove('invalid');
+      return true;
+    }
+
+    function validateName() {
+      const val = nameInput.value.trim();
+      if (val.length < 3) {
+        nameInput.classList.add('invalid');
+        nameInput.classList.remove('valid');
+        return false;
+      }
+      nameInput.classList.add('valid');
+      nameInput.classList.remove('invalid');
+      return true;
+    }
+
+    function checkFormValidity() {
+      const valid = validateName() &&
+                    validateEmail() &&
+                    validatePassword() &&
+                    validateConfirmPassword() &&
+                    validateDob() &&
+                    validateGender();
+      submitBtn.disabled = !valid;
+    }
+
+    nameInput.addEventListener('input', checkFormValidity);
+    emailInput.addEventListener('input', checkFormValidity);
+    passwordInput.addEventListener('input', () => {
+      validatePassword();
+      validateConfirmPassword();
+      checkFormValidity();
+    });
+    confirmPasswordInput.addEventListener('input', () => {
+      validateConfirmPassword();
+      checkFormValidity();
+    });
+    dobInput.addEventListener('input', checkFormValidity);
+    genderSelect.addEventListener('change', checkFormValidity);
+
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      formMessage.textContent = '';
+
+      if (!submitBtn.disabled) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'অপেক্ষা করুন...';
+
+        try {
+          const userCredential = await createUserWithEmailAndPassword(auth, emailInput.value.trim(), passwordInput.value);
+          const user = userCredential.user;
+
+          await setDoc(doc(db, "users", user.uid), {
+            name: nameInput.value.trim(),
+            email: emailInput.value.trim(),
+            dob: dobInput.value,
+            gender: genderSelect.value,
+            createdAt: serverTimestamp()
+          });
+
+          formMessage.style.color = 'green';
+          formMessage.textContent = 'নিবন্ধন সফল হয়েছে! লগইন পৃষ্ঠায় নিয়ে যাওয়া হচ্ছে...';
+
+          setTimeout(() => {
+            window.location.href = 'login.html';
+          }, 2000);
+
+        } catch (error) {
+          formMessage.style.color = 'red';
+          if (error.code === 'auth/email-already-in-use') {
+            formMessage.textContent = 'এই ইমেইল আগে থেকেই ব্যবহার করা হয়েছে।';
+          } else if (error.code === 'auth/invalid-email') {
+            formMessage.textContent = 'ইমেইল ঠিকমত নয়।';
+          } else if (error.code === 'auth/weak-password') {
+            formMessage.textContent = 'পাসওয়ার্ড দুর্বল।';
+          } else {
+            formMessage.textContent = error.message;
+          }
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'নিবন্ধন';
         }
-        updateDisplay();
-        setDisplayMode();
-      } catch (err) {
-        showMessage('তথ্য লোডে সমস্যা হয়েছে', true);
       }
     });
 
-    function updateDisplay() {
-      nameDisplay.textContent = userData.name || '-';
-      genderDisplay.textContent = userData.gender || '-';
-      ageDisplay.textContent = userData.age || '-';
-
-      nameInput.value = userData.name || '';
-      genderInput.value = userData.gender || '';
-      ageInput.value = userData.age || '';
-    }
-
-    editBtn.addEventListener('click', () => {
-      setEditMode();
-    });
-
-    cancelBtn.addEventListener('click', () => {
-      updateDisplay();
-      setDisplayMode();
-    });
-
-    saveBtn.addEventListener('click', async () => {
-      const newName = nameInput.value.trim();
-      const newGender = genderInput.value;
-      const newAge = parseInt(ageInput.value);
-
-      if (!newName) {
-        showMessage('নাম অবশ্যই দিতে হবে', true);
-        return;
-      }
-      if (!newGender) {
-        showMessage('জেন্ডার নির্বাচন করুন', true);
-        return;
-      }
-      if (isNaN(newAge) || newAge < 1 || newAge > 150) {
-        showMessage('বয়স ১ থেকে ১৫০ এর মধ্যে হতে হবে', true);
-        return;
-      }
-
-      try {
-        await db.collection('users').doc(currentUser.uid).update({
-          name: newName,
-          gender: newGender,
-          age: newAge,
-        });
-
-        await currentUser.updateProfile({ displayName: newName });
-
-        userData.name = newName;
-        userData.gender = newGender;
-        userData.age = newAge;
-
-        updateDisplay();
-        setDisplayMode();
-        showMessage('প্রোফাইল সফলভাবে আপডেট হয়েছে');
-      } catch (error) {
-        showMessage('আপডেট করতে সমস্যা হয়েছে', true);
-        console.error(error);
-      }
-    });
+    checkFormValidity();
   </script>
-
 </body>
 </html>
