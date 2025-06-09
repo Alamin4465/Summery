@@ -1,18 +1,60 @@
+// login-register.js
 
+// Firebase Auth এবং Firestore ব্যবহার
+const auth = firebase.auth();
+const db = firebase.firestore();
 
-// ---------------------- Login Logic ----------------------
-document.getElementById('loginForm')?.addEventListener('submit', function (e) {
-  e.preventDefault();
+// রেজিস্ট্রেশন
+const registerForm = document.getElementById("registerForm");
+if (registerForm) {
+  registerForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-  const email = document.getElementById('loginEmail').value.trim();
-  const password = document.getElementById('loginPassword').value;
+    const name = document.getElementById("regName").value;
+    const gender = document.getElementById("regGender").value;
+    const dob = document.getElementById("regDob").value;
+    const email = document.getElementById("regEmail").value;
+    const password = document.getElementById("regPassword").value;
 
-  signInWithEmailAndPassword(auth, email, password)
-    .then(() => {
-      alert("লগইন সফল");
+    try {
+      const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+      const uid = userCredential.user.uid;
+
+      // Firestore-এ ব্যবহারকারীর তথ্য সংরক্ষণ
+      await db.collection("users").doc(uid).set({
+        uid,
+        name,
+        gender,
+        dob,
+        email,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      alert("রেজিস্ট্রেশন সফল হয়েছে!");
       window.location.href = "index.html";
-    })
-    .catch((error) => {
+    } catch (error) {
+      console.error("রেজিস্ট্রেশন ত্রুটি:", error.message);
+      alert("রেজিস্ট্রেশন ব্যর্থ: " + error.message);
+    }
+  });
+}
+
+// লগইন
+const loginForm = document.getElementById("loginForm");
+if (loginForm) {
+  loginForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const email = document.getElementById("loginEmail").value;
+    const password = document.getElementById("loginPassword").value;
+
+    try {
+      await auth.signInWithEmailAndPassword(email, password);
+      alert("লগইন সফল হয়েছে!");
+      window.location.href = "index.html";
+    } catch (error) {
+      console.error("লগইন ত্রুটি:", error.message);
       alert("লগইন ব্যর্থ: " + error.message);
-    });
-});
+    }
+  });
+}
