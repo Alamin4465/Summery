@@ -2,15 +2,21 @@
 <html lang="bn">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>নিবন্ধন</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>প্রোফাইল তথ্য</title>
 
   <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
   <script src="firebase-config.js"></script>
 
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>নিবন্ধন</title>
   <style>
     * {
       margin: 0;
@@ -92,19 +98,6 @@
       margin-bottom: 10px;
     }
 
-    .register-box .status {
-      float: right;
-      margin-right: 10px;
-    }
-
-    input.valid, select.valid {
-      border-color: #00ff00;
-    }
-
-    input.invalid, select.invalid {
-      border-color: #ff0000;
-    }
-
     #formMessage {
       text-align: center;
       margin-top: 10px;
@@ -116,36 +109,79 @@
     <h2>নিবন্ধন ফর্ম</h2>
     <form id="registerForm">
       <input type="text" id="name" placeholder="নাম" required />
-
       <input type="email" id="email" placeholder="ইমেইল" required />
-      <span id="emailStatus" class="status"></span>
-      <span id="emailError" class="error"></span>
-
       <input type="password" id="password" placeholder="পাসওয়ার্ড" required />
-      <span id="passStatus" class="status"></span>
-      <span id="passError" class="error"></span>
-
       <input type="password" id="confirmPassword" placeholder="পুনরায় পাসওয়ার্ড" required />
-      <span id="confirmStatus" class="status"></span>
-      <span id="confirmError" class="error"></span>
-
       <input type="date" id="dob" required />
-      <span id="dobError" class="error"></span>
-
       <select id="gender" required>
         <option value="">লিঙ্গ নির্বাচন করুন</option>
         <option value="male">পুরুষ</option>
         <option value="female">নারী</option>
         <option value="other">অন্যান্য</option>
       </select>
-      <span id="genderError" class="error"></span>
-
       <button type="submit" id="submitBtn" disabled>নিবন্ধন</button>
       <p id="formMessage"></p>
     </form>
   </div>
 
-  <!-- Validation + Firebase Logic -->
-  <script src="login-register.js"></script>
+  <!-- ✅ Firebase JS must load after DOM -->
+  <script type="module">
+
+    window.addEventListener("DOMContentLoaded", () => {
+      const form = document.getElementById("registerForm");
+      const submitBtn = document.getElementById("submitBtn");
+      const name = document.getElementById("name");
+      const email = document.getElementById("email");
+      const password = document.getElementById("password");
+      const confirmPassword = document.getElementById("confirmPassword");
+      const dob = document.getElementById("dob");
+      const gender = document.getElementById("gender");
+      const formMessage = document.getElementById("formMessage");
+
+      function validateForm() {
+        const isValid =
+          name.value &&
+          email.value &&
+          password.value.length >= 6 &&
+          password.value === confirmPassword.value &&
+          dob.value &&
+          gender.value;
+        submitBtn.disabled = !isValid;
+      }
+
+      form.addEventListener("input", validateForm);
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        try {
+          const userCredential = await createUserWithEmailAndPassword(auth, email.value, password.value);
+          const user = userCredential.user;
+
+          await updateProfile(user, {
+            displayName: name.value
+          });
+
+          await setDoc(doc(db, "users", user.uid), {
+            uid: user.uid,
+            name: name.value,
+            email: email.value,
+            dob: dob.value,
+            gender: gender.value,
+            createdAt: new Date()
+          });
+
+          formMessage.style.color = "lightgreen";
+          formMessage.innerText = "নিবন্ধন সফল হয়েছে! লগইন পেইজে নিয়ে যাওয়া হচ্ছে...";
+
+          setTimeout(() => {
+            window.location.href = "login.html";
+          }, 3000);
+        } catch (error) {
+          formMessage.style.color = "red";
+          formMessage.innerText = `ত্রুটি: ${error.message}`;
+        }
+      });
+    });
+  </script>
 </body>
 </html>
