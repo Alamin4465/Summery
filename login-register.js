@@ -1,8 +1,23 @@
-import { auth, db } from './firebase-config.js';
-import { createUserWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js';
-import { doc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js';
 
-// DOM elements
+
+// ---------------------- Login Logic ----------------------
+document.getElementById('loginForm')?.addEventListener('submit', function (e) {
+  e.preventDefault();
+
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+
+  signInWithEmailAndPassword(auth, email, password)
+    .then(() => {
+      alert("লগইন সফল");
+      window.location.href = "index.html";
+    })
+    .catch((error) => {
+      alert("লগইন ব্যর্থ: " + error.message);
+    });
+});
+
+// ---------------------- Registration Logic ----------------------
 const form = document.getElementById('registerForm');
 const submitBtn = document.getElementById('submitBtn');
 const formMessage = document.getElementById('formMessage');
@@ -11,7 +26,7 @@ const nameInput = document.getElementById('name');
 const emailInput = document.getElementById('email');
 const passwordInput = document.getElementById('password');
 const confirmPasswordInput = document.getElementById('confirmPassword');
-const dobInput = document.getElementById('dob');
+const ageInput = document.getElementById('age');
 const genderSelect = document.getElementById('gender');
 
 const emailStatus = document.getElementById('emailStatus');
@@ -20,7 +35,7 @@ const passStatus = document.getElementById('passStatus');
 const passError = document.getElementById('passError');
 const confirmStatus = document.getElementById('confirmStatus');
 const confirmError = document.getElementById('confirmError');
-const dobError = document.getElementById('dobError');
+const ageError = document.getElementById('ageError');
 const genderError = document.getElementById('genderError');
 
 // Validation helpers
@@ -30,7 +45,6 @@ function setValid(input, statusEl, errorEl) {
   if (statusEl) statusEl.textContent = '✓';
   if (errorEl) errorEl.textContent = '';
 }
-
 function setInvalid(input, statusEl, errorEl, message) {
   input.classList.add('invalid');
   input.classList.remove('valid');
@@ -38,7 +52,18 @@ function setInvalid(input, statusEl, errorEl, message) {
   if (errorEl) errorEl.textContent = message;
 }
 
-// Email validation
+// Input Validations
+function validateName() {
+  const val = nameInput.value.trim();
+  if (val.length < 3) {
+    nameInput.classList.add('invalid');
+    nameInput.classList.remove('valid');
+    return false;
+  }
+  nameInput.classList.add('valid');
+  nameInput.classList.remove('invalid');
+  return true;
+}
 function validateEmail() {
   const val = emailInput.value.trim();
   if (!val) {
@@ -53,8 +78,6 @@ function validateEmail() {
   setValid(emailInput, emailStatus, emailError);
   return true;
 }
-
-// Password validation
 function validatePassword() {
   const val = passwordInput.value;
   if (val.length < 6) {
@@ -64,53 +87,28 @@ function validatePassword() {
   setValid(passwordInput, passStatus, passError);
   return true;
 }
-
-// Confirm password
 function validateConfirmPassword() {
-  if (confirmPasswordInput.value !== passwordInput.value) {
+  const val = confirmPasswordInput.value;
+  if (val !== passwordInput.value) {
     setInvalid(confirmPasswordInput, confirmStatus, confirmError, 'পাসওয়ার্ড মেলেনি');
     return false;
   }
   setValid(confirmPasswordInput, confirmStatus, confirmError);
   return true;
 }
-
-// DOB validation
-function calculateAgeFromDOB(dob) {
-  const birthDate = new Date(dob);
-  const today = new Date();
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const m = today.getMonth() - birthDate.getMonth();
-  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-    age--;
-  }
-  return age;
-}
-
-function validateDOB() {
-  const dobVal = dobInput.value;
-  if (!dobVal) {
-    dobError.textContent = 'জন্মতারিখ দিন';
-    dobInput.classList.add('invalid');
-    dobInput.classList.remove('valid');
+function validateAge() {
+  const val = ageInput.value.trim();
+  if (!val || isNaN(val) || val < 1 || val > 150) {
+    ageError.textContent = 'বয়স ১ থেকে ১৫০ এর মধ্যে হতে হবে';
+    ageInput.classList.add('invalid');
+    ageInput.classList.remove('valid');
     return false;
   }
-
-  const age = calculateAgeFromDOB(dobVal);
-  if (age < 1 || age > 150) {
-    dobError.textContent = 'বয়স ১ থেকে ১৫০ বছরের মধ্যে হতে হবে';
-    dobInput.classList.add('invalid');
-    dobInput.classList.remove('valid');
-    return false;
-  }
-
-  dobError.textContent = '';
-  dobInput.classList.add('valid');
-  dobInput.classList.remove('invalid');
+  ageError.textContent = '';
+  ageInput.classList.add('valid');
+  ageInput.classList.remove('invalid');
   return true;
 }
-
-// Gender validation
 function validateGender() {
   if (!genderSelect.value) {
     genderError.textContent = 'লিঙ্গ নির্বাচন করুন';
@@ -124,32 +122,18 @@ function validateGender() {
   return true;
 }
 
-// Name validation
-function validateName() {
-  const val = nameInput.value.trim();
-  if (val.length < 3) {
-    nameInput.classList.add('invalid');
-    nameInput.classList.remove('valid');
-    return false;
-  }
-  nameInput.classList.add('valid');
-  nameInput.classList.remove('invalid');
-  return true;
-}
-
-// Check all
+// Combined validation
 function checkFormValidity() {
   const valid = validateName() &&
-                validateEmail() &&
-                validatePassword() &&
-                validateConfirmPassword() &&
-                validateDOB() &&
-                validateGender();
-
+    validateEmail() &&
+    validatePassword() &&
+    validateConfirmPassword() &&
+    validateAge() &&
+    validateGender();
   submitBtn.disabled = !valid;
 }
 
-// Real-time validation
+// Event listeners for validation
 nameInput.addEventListener('input', checkFormValidity);
 emailInput.addEventListener('input', checkFormValidity);
 passwordInput.addEventListener('input', () => {
@@ -161,11 +145,11 @@ confirmPasswordInput.addEventListener('input', () => {
   validateConfirmPassword();
   checkFormValidity();
 });
-dobInput.addEventListener('input', checkFormValidity);
+ageInput.addEventListener('input', checkFormValidity);
 genderSelect.addEventListener('change', checkFormValidity);
 
-// Submit
-form.addEventListener('submit', async (e) => {
+// Submit registration form
+form?.addEventListener('submit', async e => {
   e.preventDefault();
   formMessage.textContent = '';
 
@@ -177,16 +161,16 @@ form.addEventListener('submit', async (e) => {
       const userCredential = await createUserWithEmailAndPassword(auth, emailInput.value.trim(), passwordInput.value);
       const user = userCredential.user;
 
-      await setDoc(doc(db, 'users', user.uid), {
+      await setDoc(doc(db, "users", user.uid), {
         name: nameInput.value.trim(),
         email: emailInput.value.trim(),
-        dob: dobInput.value,
+        age: Number(ageInput.value),
         gender: genderSelect.value,
         createdAt: serverTimestamp()
       });
 
       formMessage.style.color = 'green';
-      formMessage.textContent = 'নিবন্ধন সফল হয়েছে! লগইন পৃষ্ঠায় নিয়ে যাওয়া হচ্ছে...';
+      formMessage.textContent = 'নিবন্ধন সফল হয়েছে! লগইন পৃষ্ঠায় নিয়ে যাওয়া হচ্ছে...';
 
       setTimeout(() => {
         window.location.href = 'login.html';
@@ -210,5 +194,5 @@ form.addEventListener('submit', async (e) => {
   }
 });
 
-// Init state
+// Initial form state
 checkFormValidity();
