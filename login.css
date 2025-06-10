@@ -1,155 +1,169 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali&display=swap');
 
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: 'Noto Sans Bengali', Arial, sans-serif;
-    font-size: 1.05em;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Noto Sans Bengali', sans-serif;
 }
 
 body {
-    padding: 20px;
-    line-height: 1.7;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    background: url('https://as1.ftcdn.net/jpg/06/86/04/24/1000_F_686042483_VZwkSaSfHCHCkO0cmX8Ggpr8e3S823za.webp') no-repeat center center fixed;
-    background-size: cover;
+  padding: 20px;
+  line-height: 1.7;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: url('https://as1.ftcdn.net/jpg/06/86/04/24/1000_F_686042483_VZwkSaSfHCHCkO0cmX8Ggpr8e3S823za.webp') no-repeat center center fixed;
+  background-size: cover;
 }
 
 .container {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    width: 380px;
-    padding: 30px 40px;
-    position: relative;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(12px);
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  width: 380px;
+  padding: 30px 40px;
+  transition: 0.4s ease;
 }
 
 .toggle-buttons {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 25px;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 25px;
 }
 
 .toggle-buttons button {
-    background: transparent;
-    border: none;
-    font-size: 18px;
-    font-weight: 600;
-    color: #764ba2;
-    padding: 10px 25px;
-    cursor: pointer;
-    transition: color 0.3s ease, border-bottom 0.3s ease;
-    border-bottom: 3px solid transparent;
-    margin: 0 10px;
+  background: rgba(255, 255, 255, 0.4);
+  padding: 12px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #000;
+  cursor: pointer;
+  transition: 0.3s;
+  border: none;
+  width: 130px;
+  text-align: center;
 }
 
 .toggle-buttons button:hover,
 .toggle-buttons button.active {
-    color: red ;
-    border-bottom: 3px solid red;
+  background: rgba(200, 200, 255, 0.5);
+  color: red;
+  border-bottom: 4px solid red;
 }
 
 .form {
-    display: none;
-    flex-direction: column;
+  display: none;
+  flex-direction: column;
 }
 
 .form.active {
-    display: flex;
+  display: flex;
 }
 
 h2 {
-    text-align: center;
-    color: #764ba2;
-    margin-bottom: 25px;
-    font-weight: 700;
+  text-align: center;
+  color: #ffffffee;
+  margin-bottom: 25px;
+  font-weight: 700;
+  font-size: 24px;
 }
 
 input, select {
-    padding: 12px 15px;
-    margin-bottom: 18px;
-    border-radius: 8px;
-    border: 1.8px solid #ccc;
-    font-size: 16px;
-    transition: border-color 0.3s ease;
-    background: rgba(255, 255, 255, 0.85);
+  padding: 12px 15px;
+  margin-bottom: 18px;
+  border-radius: 10px;
+  border: none;
+  font-size: 16px;
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  outline: none;
+  transition: 0.3s ease;
 }
 
-input:focus, select:focus {
-    outline: none;
-    border-color: #764ba2;
-    box-shadow: 0 0 8px rgba(118, 75, 162, 0.5);
+input::placeholder {
+  color: #ffffffaa;
 }
+
+select {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+input:focus, select:focus {
+  background: rgba(173, 216, 230, 0.2); /* light blue transparent */
+  box-shadow: 0 0 10px rgba(30, 144, 255, 0.6); /* soft blue glow */
+  border: 1px solid rgba(30, 144, 255, 0.5);
+  outline: none;
+}
+
 
 button[type="submit"],
 #resetSection button {
-    background: transparent;
-    border: 2px solid #764ba2;
-    color: #764ba2;
-    font-size: 18px;
-    font-weight: 600;
-    border-radius: 8px;
-    padding: 12px 0;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    margin-top: 10px;
+  background: rgba(0, 123, 255, 0.2); /* transparent blue */
+  border: 2px solid rgba(0, 123, 255, 0.5);
+  color: #fff;
+  font-size: 18px;
+  font-weight: 600;
+  border-radius: 10px;
+  padding: 12px 0;
+  cursor: pointer;
+  transition: all 0.3s ease;
 }
 
 button[type="submit"]:hover,
 #resetSection button:hover {
-    background: #764ba2;
-    color: #fff;
+  background: rgba(40, 167, 69, 0.2); /* transparent green */
+  border-color: rgba(40, 167, 69, 0.5);
+    color: red;
+  border-bottom: 4px solid red;
 }
-
 p {
-    text-align: center;
-    margin-top: 10px;
-    font-size: 14px;
-    color: #555;
+  text-align: left;
+  margin-top: 10px;
+  font-size: 14px;
+  color: #eee;
 }
 
 p a {
-    color: #764ba2;
-    text-decoration: none;
-    font-weight: 600;
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
 }
 
 p a:hover {
-    text-decoration: underline;
+  text-decoration: underline;
 }
 
 #registerMessage,
 #resetMessage {
-    text-align: center;
-    font-weight: 600;
-    margin-top: 8px;
-    min-height: 20px;
+  text-align: center;
+  font-weight: 600;
+  margin-top: 8px;
+  min-height: 20px;
+  color: #fff;
 }
 
 @media (max-width: 420px) {
-    .container {
-        width: 90%;
-        padding: 20px 25px;
-    }
+  .container {
+    width: 90%;
+    padding: 20px 25px;
+  }
 
-    .toggle-buttons button {
-        font-size: 16px;
-        padding: 8px 15px;
-        margin: 0 5px;
-    }
+  .toggle-buttons button {
+    font-size: 16px;
+    padding: 8px 15px;
+    margin: 0 5px;
+  }
 
-    input, select {
-        font-size: 14px;
-    }
+  input, select {
+    font-size: 14px;
+  }
 
-    button[type="submit"],
-    #resetSection button {
-        font-size: 16px;
-    }
+  button[type="submit"],
+  #resetSection button {
+    font-size: 16px;
+  }
 }
