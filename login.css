@@ -1,146 +1,155 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali&display=swap');
 
 * {
-  box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Noto Sans Bengali', Arial, sans-serif;
+    font-size: 1.05em;
 }
 
 body {
-  margin: 0;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  font-family: 'Noto Sans Bengali', sans-serif;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  color: #333;
+    padding: 20px;
+    line-height: 1.7;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: url('https://as1.ftcdn.net/jpg/06/86/04/24/1000_F_686042483_VZwkSaSfHCHCkO0cmX8Ggpr8e3S823za.webp') no-repeat center center fixed;
+    background-size: cover;
 }
+
 .container {
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 15px 40px rgba(0,0,0,0.2);
-  width: 380px;
-  padding: 30px 40px;
-  position: relative;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    width: 380px;
+    padding: 30px 40px;
+    position: relative;
 }
 
 .toggle-buttons {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 25px;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 25px;
 }
 
 .toggle-buttons button {
-  background: transparent;
-  border: none;
-  font-size: 18px;
-  font-weight: 600;
-  color: #666;
-  padding: 10px 25px;
-  cursor: pointer;
-  transition: color 0.3s ease, border-bottom 0.3s ease;
-  border-bottom: 3px solid transparent;
-  margin: 0 10px;
+    background: transparent;
+    border: none;
+    font-size: 18px;
+    font-weight: 600;
+    color: #764ba2;
+    padding: 10px 25px;
+    cursor: pointer;
+    transition: color 0.3s ease, border-bottom 0.3s ease;
+    border-bottom: 3px solid transparent;
+    margin: 0 10px;
 }
 
 .toggle-buttons button:hover,
 .toggle-buttons button.active {
-  color: #764ba2;
-  border-bottom: 3px solid #764ba2;
+    color: red ;
+    border-bottom: 3px solid red;
 }
 
 .form {
-  display: none;
-  flex-direction: column;
+    display: none;
+    flex-direction: column;
 }
 
 .form.active {
-  display: flex;
+    display: flex;
 }
 
 h2 {
-  text-align: center;
-  color: #764ba2;
-  margin-bottom: 25px;
-  font-weight: 700;
+    text-align: center;
+    color: #764ba2;
+    margin-bottom: 25px;
+    font-weight: 700;
 }
 
 input, select {
-  padding: 12px 15px;
-  margin-bottom: 18px;
-  border-radius: 8px;
-  border: 1.8px solid #ccc;
-  font-size: 16px;
-  transition: border-color 0.3s ease;
+    padding: 12px 15px;
+    margin-bottom: 18px;
+    border-radius: 8px;
+    border: 1.8px solid #ccc;
+    font-size: 16px;
+    transition: border-color 0.3s ease;
+    background: rgba(255, 255, 255, 0.85);
 }
 
 input:focus, select:focus {
-  outline: none;
-  border-color: #764ba2;
-  box-shadow: 0 0 8px rgba(118,75,162,0.5);
+    outline: none;
+    border-color: #764ba2;
+    box-shadow: 0 0 8px rgba(118, 75, 162, 0.5);
 }
 
 button[type="submit"],
 #resetSection button {
-  background: #764ba2;
-  border: none;
-  color: #fff;
-  font-size: 18px;
-  font-weight: 600;
-  border-radius: 8px;
-  padding: 12px 0;
-  cursor: pointer;
-  transition: background 0.3s ease;
-  margin-top: 10px;
+    background: transparent;
+    border: 2px solid #764ba2;
+    color: #764ba2;
+    font-size: 18px;
+    font-weight: 600;
+    border-radius: 8px;
+    padding: 12px 0;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 10px;
 }
 
 button[type="submit"]:hover,
 #resetSection button:hover {
-  background: #5b378e;
+    background: #764ba2;
+    color: #fff;
 }
 
 p {
-  text-align: center;
-  margin-top: 10px;
-  font-size: 14px;
-  color: #555;
+    text-align: center;
+    margin-top: 10px;
+    font-size: 14px;
+    color: #555;
 }
 
 p a {
-  color: #764ba2;
-  text-decoration: none;
-  font-weight: 600;
+    color: #764ba2;
+    text-decoration: none;
+    font-weight: 600;
 }
 
 p a:hover {
-  text-decoration: underline;
+    text-decoration: underline;
 }
 
 #registerMessage,
 #resetMessage {
-  text-align: center;
-  font-weight: 600;
-  margin-top: 8px;
-  min-height: 20px;
+    text-align: center;
+    font-weight: 600;
+    margin-top: 8px;
+    min-height: 20px;
 }
 
 @media (max-width: 420px) {
-  .container {
-    width: 90%;
-    padding: 20px 25px;
-  }
+    .container {
+        width: 90%;
+        padding: 20px 25px;
+    }
 
-  .toggle-buttons button {
-    font-size: 16px;
-    padding: 8px 15px;
-    margin: 0 5px;
-  }
+    .toggle-buttons button {
+        font-size: 16px;
+        padding: 8px 15px;
+        margin: 0 5px;
+    }
 
-  input, select {
-    font-size: 14px;
-  }
+    input, select {
+        font-size: 14px;
+    }
 
-  button[type="submit"],
-  #resetSection button {
-    font-size: 16px;
-  }
+    button[type="submit"],
+    #resetSection button {
+        font-size: 16px;
+    }
 }
