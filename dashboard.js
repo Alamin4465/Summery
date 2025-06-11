@@ -1,7 +1,7 @@
 function loadDashboardSummary() {
   const content = document.getElementById('content');
   content.innerHTML = `
-    <h2>ড্যাশবোর্ড</h2>
+    <h2 class="titel">ড্যাশবোর্ড</h2>
 
     <div id="summary" class="summary-container">
       <div class="summary-card">
