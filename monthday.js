@@ -1,7 +1,7 @@
 function transactionFilter() {
   const content = document.getElementById('content');
   content.innerHTML = `
-    <h2>লেনদেন ফর্ম</h2>
+    <h2 class="titel">লেনদেন ফর্ম</h2>
   <div class="Filter-monthday">
       <div class ="monthday">
       <h2>মাস ও তারিখ ফিল্টার </h2>
