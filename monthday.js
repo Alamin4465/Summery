@@ -33,14 +33,22 @@ function transactionFilter() {
     </div>
   `;
 
-  let filterSummaryChart = null;
+let filterSummaryChart = null;
 
+// বাংলা টাকা ফরম্যাট
 function formatTaka(amount) {
   return new Intl.NumberFormat("bn-BD", {
     style: "currency",
     currency: "BDT",
     minimumFractionDigits: 0,
   }).format(amount || 0);
+}
+
+// ইংরেজি → বাংলা সংখ্যায় রূপান্তর
+function toBanglaNumber(number) {
+  const en = '0123456789';
+  const bn = '০১২৩৪৫৬৭৮৯';
+  return number.toString().replace(/[0-9]/g, d => bn[en.indexOf(d)]);
 }
 
 function drawFilterSummaryChart(label, income, expense) {
@@ -51,12 +59,13 @@ function drawFilterSummaryChart(label, income, expense) {
     filterSummaryChart.destroy();
   }
 
-  const total = income - expense;
-  const safeIncome = income || 0.01;
-  const safeExpense = expense || 0.01;
-  const safeTotal = total || 0.01;
+  // Pie Chart accepts only positive numbers
+  const safeIncome = Math.max(income, 0.01);
+  const safeExpense = Math.max(expense, 0.01);
+  const net = income - expense;
+  const safeTotal = Math.max(Math.abs(net), 0.01);
 
-  const data = [safeIncome, safeExpense, Math.abs(safeTotal)];
+  const data = [safeIncome, safeExpense, safeTotal];
   const totalSum = data.reduce((a, b) => a + b, 0);
 
   filterSummaryChart = new Chart(ctx, {
@@ -75,17 +84,17 @@ function drawFilterSummaryChart(label, income, expense) {
       plugins: {
         title: {
           display: true,
-          text: `${label} (মোট: ${formatTaka(total)})`,
+          text: `${label} (মোট: ${formatTaka(net)})`,
           font: {
             size: 18,
             family: 'Noto Sans Bengali'
           },
-          color: '#2d3436'
+          color: '#ffffff' // শিরোনাম সাদা
         },
         legend: {
           position: 'bottom',
           labels: {
-            color: '#ffffff',
+            color: '#ffffff', // লেবেল সাদা
             font: {
               size: 14,
               family: 'Noto Sans Bengali'
@@ -98,19 +107,20 @@ function drawFilterSummaryChart(label, income, expense) {
               const label = tooltipItem.label || '';
               const value = tooltipItem.raw || 0;
               const percentage = ((value / totalSum) * 100).toFixed(1);
-              return `${label}: ${formatTaka(value)} (${percentage}%)`;
+              return `${label}: ${formatTaka(value)} (${toBanglaNumber(percentage)}%)`;
             }
           }
         },
         datalabels: {
-          color: '#ffffff',
+          color: '#ffffff', // ডাটা লেবেল সাদা
           font: {
             family: 'Noto Sans Bengali',
-            weight: 'bold'
+            weight: 'bold',
+            size: 14
           },
           formatter: function (value, context) {
             const percent = ((value / totalSum) * 100).toFixed(1);
-            return `${formatTaka(value)}\n(${percent}%)`;
+            return `${toBanglaNumber(percent)}%`;
           }
         }
       }
