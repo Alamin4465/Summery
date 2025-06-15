@@ -229,6 +229,8 @@ function filterByMonth(userId, month) {
   const prevMonthStart = new Date(currentMonthStart);
   prevMonthStart.setMonth(prevMonthStart.getMonth() - 1);
 
+  const prevMonthEnd = new Date(currentMonthStart); // আগের মাসের শেষ দিন = বর্তমান মাসের শুরুর আগের দিন
+
   let monthlyIncome = 0;
   let monthlyExpense = 0;
   let prevBalance = 0;
@@ -236,8 +238,8 @@ function filterByMonth(userId, month) {
   const db = firebase.firestore();
   const transactionRef = db.collection("users").doc(userId).collection("transactions");
 
+  // ১. আগের মাস পর্যন্ত সমস্ত ট্রান্সাকশনের জন্য আগের ব্যালেন্স বের করো
   transactionRef
-    .where("timestamp", ">=", prevMonthStart)
     .where("timestamp", "<", currentMonthStart)
     .get()
     .then(snapshot => {
@@ -247,6 +249,7 @@ function filterByMonth(userId, month) {
         else if (data.type === "expense") prevBalance -= data.amount || 0;
       });
 
+      // ২. বর্তমান মাসের আয় ও ব্যয় হিসাব করো
       return transactionRef
         .where("timestamp", ">=", currentMonthStart)
         .where("timestamp", "<", currentMonthEnd)
@@ -258,11 +261,13 @@ function filterByMonth(userId, month) {
         if (data.type === "income") monthlyIncome += data.amount || 0;
         else if (data.type === "expense") monthlyExpense += data.amount || 0;
       });
+
       const total = prevBalance + monthlyIncome - monthlyExpense;
       const monthName = new Date(currentMonthStart).toLocaleString("bn-BD", {
         month: "short",
         year: "numeric",
       });
+
       const summaryTable = document.getElementById("monthlySummary");
       summaryTable.innerHTML = `
         <thead>
@@ -302,5 +307,3 @@ function filterByMonth(userId, month) {
       renderSummaryChart(`${monthName} - আয় বনাম ব্যয়`, monthlyIncome, monthlyExpense);
     });
 }
-}
-  
