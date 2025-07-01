@@ -402,19 +402,28 @@ h2.titel, h3 {
     font-weight: bold;
 }
 
-#monthlySummary tbody tr:nth-child(1) td {
+									#monthlySummary tbody tr:nth-child(1) td:nth-child(2),
+    #monthlySummary tbody tr:nth-child(1) td:nth-child(3)    {
   font-weight: bold;
     font-size: 1.3em;
+    color:orange;
 }
+    #monthlySummary tbody tr:nth-child(2) td:nth-child(1),
+    #monthlySummary tbody tr:nth-child(2) td:nth-child(2)    {
+  font-weight: bold;
+    font-size: 1.3em;
+    color:green;
+}
+    
 
-#monthlySummary tbody tr:nth-child(1) td:nth-child(2) {
+#monthlySummary tbody tr:nth-child(3) td:nth-child(1),
+#monthlySummary tbody tr:nth-child(3) td:nth-child(3) {
   color: red;
     font-weight: bold;
 }
-
-#monthlySummary tbody tr:nth-child(3) td:nth-child(4),
-#monthlySummary tbody tr:nth-child(3) td:nth-child(5) {
-  color: red;
+    #monthlySummary tbody tr:nth-child(3) td:nth-child(4)
+ {
+  color: blue;
     font-weight: bold;
 }
 
@@ -423,3 +432,5 @@ h2.titel, h3 {
   color: white;
   font-weight: bold;
 }
+
+    
