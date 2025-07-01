@@ -23,10 +23,40 @@ function loadDashboardSummary() {
       <canvas id="summaryChart"></canvas>
     </div>
   </br>
-    <div class="chartstyle">
-      <canvas id="lineChart"></canvas>
-      <canvas id="categoryChart"></canvas>
+  <div class="chartstyle">
+  <div style="text-align: center; margin-top: 20px;">
+    <canvas id="lineChart" height="300"></canvas>
+
+    <div style="
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-top: 20px;
+    ">
+      <input 
+        type="range" 
+        id="dateSlider" 
+        min="0" 
+        max="0" 
+        step="1" 
+        value="0"
+        style="
+          width: 60%;
+          height: 16px;
+          appearance: none;
+          -webkit-appearance: none;
+          background: #ccc;
+          border-radius: 10px;
+          outline: none;
+          cursor: pointer;
+        "
+        oninput="this.style.setProperty('--value', this.value)"
+      >
     </div>
+  </div>
+
+  <canvas id="categoryChart"></canvas>
+</div>
   `;
 
   const db = firebase.firestore();
@@ -204,18 +234,27 @@ function drawCategoryChart(incomeData, expenseData) {
     }]
   });
 }
+let lineChartInstance;
+
 function drawLineChart(dateData) {
   const ctx = document.getElementById('lineChart').getContext('2d');
   const sortedDates = Object.keys(dateData).sort();
 
-  new Chart(ctx, {
+  const incomeData = sortedDates.map(date => dateData[date].income || 0);
+  const expenseData = sortedDates.map(date => dateData[date].expense || 0);
+
+  if (lineChartInstance) {
+    lineChartInstance.destroy();
+  }
+
+  lineChartInstance = new Chart(ctx, {
     type: 'line',
     data: {
       labels: sortedDates,
       datasets: [
         {
           label: 'আয়',
-          data: sortedDates.map(date => dateData[date].income || 0),
+          data: incomeData,
           borderColor: '#4caf50',
           backgroundColor: 'rgba(76, 175, 80, 0.5)',
           pointBackgroundColor: '#4caf50',
@@ -225,7 +264,7 @@ function drawLineChart(dateData) {
         },
         {
           label: 'ব্যয়',
-          data: sortedDates.map(date => dateData[date].expense || 0),
+          data: expenseData,
           borderColor: '#f44336',
           backgroundColor: 'rgba(244, 67, 54, 0.5)',
           pointBackgroundColor: '#f44336',
@@ -241,21 +280,17 @@ function drawLineChart(dateData) {
         tooltip: {
           mode: 'index',
           intersect: false,
-          bodyFont: {
-            size: 20 // টুলটিপের ফন্ট সাইজ বড়
-          },
-          titleFont: {
-            size: 22 // টুলটিপের টাইটেল বড়
-          }
+          bodyFont: { size: 20 },
+          titleFont: { size: 22 }
         },
         legend: {
           labels: {
-            font: {
-              family: 'Arial',
-              size: 24 // লেবেল (আয়/ব্যয়) ফন্ট সাইজ
-            },
+            font: { family: 'Arial', size: 24 },
             color: '#ffffff'
           }
+        },
+        annotation: {
+          annotations: {} // Initial empty
         }
       },
       interaction: {
@@ -265,14 +300,10 @@ function drawLineChart(dateData) {
       },
       scales: {
         x: {
-          grid: {
-            display: false
-          },
+          grid: { display: false },
           ticks: {
             color: '#ffffff',
-            font: {
-              size: 18 // এক্স-অক্ষ টিক ফন্ট সাইজ
-            }
+            font: { size: 18 }
           }
         },
         y: {
@@ -281,20 +312,64 @@ function drawLineChart(dateData) {
           ticks: {
             stepSize: 500,
             color: '#ffffff',
-            font: {
-              size: 18 // ওয়াই-অক্ষ টিক ফন্ট সাইজ
-            },
+            font: { size: 18 },
             callback: function(value) {
               return value + ' টাকা';
             }
           },
-          grid: {
-            color: 'rgba(255, 255, 255, 0.2)'
-          }
+          grid: { color: 'rgba(255, 255, 255, 0.2)' }
         }
       }
     }
   });
+
+  // স্লাইডার সেটআপ কল করো
+  setupSlider(dateData, sortedDates);
+}
+
+// ধরে নিচ্ছি তোমার lineChartInstance ইতিমধ্যে ডিফাইন্ড এবং চার্ট রেন্ডার হয়ে গেছে
+
+function setupSlider(dateData, sortedDates) {
+  const slider = document.getElementById('dateSlider');
+  slider.max = sortedDates.length - 1;
+
+  slider.addEventListener('input', function () {
+    const index = parseInt(this.value);
+    const date = sortedDates[index];
+    const income = dateData[date].income || 0;
+    const expense = dateData[date].expense || 0;
+    const balance = income - expense;
+
+    // annotation আপডেট
+    lineChartInstance.options.plugins.annotation.annotations.line = {
+      type: 'line',
+      xMin: date,
+      xMax: date,
+      borderColor: 'yellow',
+      borderWidth: 2,
+      label: {
+        content: `আয়: ৳${income} | ব্যয়: ৳${expense} | অবশিষ্ট: ৳${balance}`,
+        enabled: true,
+        position: 'start',   // নিচে দেখাবে
+        yAdjust: 40,
+        color: '#fff',
+        font: {
+          size: 14,
+          weight: 'bold'
+        },
+        backgroundColor: 'transparent',  // ব্যাকগ্রাউন্ড সরানো
+        borderColor: 'transparent',      // বর্ডারও সরানো
+        padding: 0,
+        cornerRadius: 0
+      }
+    };
+
+    lineChartInstance.update();
+  });
+
+  // slider প্রথম অবস্থায় trigger করে প্রথম annotation দেখানো
+  slider.value = 0;
+  slider.dispatchEvent(new Event('input'));
 }
 function drawFuelGauge(savingRate) {
   function getColor(savingRate) {
