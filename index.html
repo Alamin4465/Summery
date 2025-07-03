@@ -16,7 +16,10 @@
   <!-- Chart Libraries (optional) -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-<!-- Chart Data Labels -->
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.4.0"></script>
+<script>
+  Chart.register(window['chartjs-plugin-annotation']); // ✅ অবশ্যই দরকার
+</script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
 </head>
 <body>
@@ -35,7 +38,7 @@
   </main>
 
   <script src="main.js"></script>
-  <script src="monthday.js"></script>
+  //<script src="monthday.js"></script>//
   <script src="transactionfrom.js"></script>
   <script src="dashboard.js"></script>
 </body>
