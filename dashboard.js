@@ -23,37 +23,36 @@ function loadDashboardSummary() {
       <canvas id="summaryChart"></canvas>
     </div>
   </br>
-  <div class="chartstyle">
-  <div style="text-align: center; margin-top: 20px;">
-    <canvas id="lineChart" height="300"></canvas>
+   <div class="chartstyle">
+  													<div class="chart-wrapper" style="max-width: 800px; margin: auto;">
 
-    <div style="
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      margin-top: 20px;
-    ">
-      <input 
-        type="range" 
-        id="dateSlider" 
-        min="0" 
-        max="0" 
-        step="1" 
-        value="0"
-        style="
-          width: 60%;
-          height: 16px;
-          appearance: none;
-          -webkit-appearance: none;
-          background: #ccc;
-          border-radius: 10px;
-          outline: none;
-          cursor: pointer;
-        "
-        oninput="this.style.setProperty('--value', this.value)"
-      >
-    </div>
+  <!-- Chart container -->
+  <div id="chartContainer" style="position: relative; width: 100%;">
+    <canvas id="lineChart" height="300"></canvas>
   </div>
+
+  <!-- Slider (middle center under chart) -->
+  <div style="display: flex; justify-content: center; margin-top: 20px;">
+    <input 
+      type="range" 
+      id="dateSlider" 
+      min="0" 
+      max="0" 
+      value="0" 
+      step="1"
+      style="
+        width: 60%;
+        height: 16px;
+        appearance: none;
+        -webkit-appearance: none;
+        background: #ccc;
+        border-radius: 10px;
+        outline: none;
+        cursor: pointer;
+      "
+    />
+  </div>
+</div>
 
   <canvas id="categoryChart"></canvas>
 </div>
@@ -327,7 +326,10 @@ function drawLineChart(dateData) {
   setupSlider(dateData, sortedDates);
 }
 
-// ধরে নিচ্ছি তোমার lineChartInstance ইতিমধ্যে ডিফাইন্ড এবং চার্ট রেন্ডার হয়ে গেছে
+function convertToBanglaNumber(input) {
+  const banglaDigits = ['০','১','২','৩','৪','৫','৬','৭','৮','৯'];
+  return input.toString().replace(/\d/g, d => banglaDigits[d]);
+}
 
 function setupSlider(dateData, sortedDates) {
   const slider = document.getElementById('dateSlider');
@@ -340,34 +342,54 @@ function setupSlider(dateData, sortedDates) {
     const expense = dateData[date].expense || 0;
     const balance = income - expense;
 
-    // annotation আপডেট
-    lineChartInstance.options.plugins.annotation.annotations.line = {
-      type: 'line',
-      xMin: date,
-      xMax: date,
-      borderColor: 'yellow',
-      borderWidth: 2,
-      label: {
-        content: `আয়: ৳${income} | ব্যয়: ৳${expense} | অবশিষ্ট: ৳${balance}`,
-        enabled: true,
-        position: 'start',   // নিচে দেখাবে
-        yAdjust: 40,
+    const banglaDate = convertToBanglaNumber(date);
+    const banglaIncome = convertToBanglaNumber(income);
+    const banglaExpense = convertToBanglaNumber(expense);
+    const banglaBalance = convertToBanglaNumber(balance);
+
+    // ✅ annotations reset করে দুইটি বসাও
+    lineChartInstance.options.plugins.annotation.annotations = {
+      // ১. ফিক্সড লেবেল
+      infoLabel: {
+        type: 'label',
+        xValue: sortedDates[0], // প্রথম দিনেই রাখবো যাতে ফিক্সড থাকে
+        yValue: lineChartInstance.scales.y.max,
+        backgroundColor: 'transparent',
+        borderColor: 'transparent',
         color: '#fff',
         font: {
           size: 14,
           weight: 'bold'
         },
-        backgroundColor: 'transparent',  // ব্যাকগ্রাউন্ড সরানো
-        borderColor: 'transparent',      // বর্ডারও সরানো
-        padding: 0,
-        cornerRadius: 0
+        padding: 4,
+        content: [
+          `তারিখ: ${banglaDate}`,
+          `আয়: ৳${banglaIncome}`,
+          `ব্যয়: ৳${banglaExpense}`,
+          `অবশিষ্ট: ৳${banglaBalance}`
+        ],
+        textAlign: 'left',
+        position: {
+          x: 'start',
+          y: 'start'
+        }
+      },
+
+      // ২. চলন্ত রেখা
+      selectedLine: {
+        type: 'line',
+        xMin: date,
+        xMax: date,
+        borderColor: 'yellow',
+        borderWidth: 3,
+        borderDash: [2] // যদি চাও ড্যাশড লাইন
       }
     };
 
     lineChartInstance.update();
   });
 
-  // slider প্রথম অবস্থায় trigger করে প্রথম annotation দেখানো
+  // প্রথম দিন দেখাও
   slider.value = 0;
   slider.dispatchEvent(new Event('input'));
 }
