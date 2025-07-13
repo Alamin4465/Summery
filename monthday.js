@@ -1,17 +1,34 @@
-
 function transactionFilter() {
   const content = document.getElementById('content');
   content.innerHTML = `
-    <h2 class="titel">লেনদেন ফিল্টার</h2>
-    <div class="Filter-monthday">
+   <h2 class="titel">লেনদেন ফিল্টার</h2>
+<div class="tabs">
+  <button class="tab-btn active" onclick="showTab(event, 'dateFilterTab')">তারিখ/মাস ফিল্টার</button>
+  <button class="tab-btn" onclick="showTab(event, 'typeFilterTab')">টাইপ/ক্যাটাগরি ফিল্টার</button>
+</div>
+
+<!-- তারিখ/মাস ফিল্টার ট্যাব -->
+<div id="dateFilterTab" class="tab-content">
+<div class="Filter-monthday">
       <div class="monthday">
-        <h2>মাস ও তারিখ ফিল্টার</h2>
-        <label>তারিখ নির্বাচন করুন:</label>
+    <h2>মাস ও তারিখ ফিল্টার</h2>
+
+    <div class="filter-row">
+      <div class="filter-group">
+        <label for="dateFilter">তারিখ নির্বাচন করুন:</label>
         <input type="date" id="dateFilter" />
-        <label>মাস নির্বাচন করুন:</label>
+      </div>
+
+      <div class="filter-group">
+        <label for="monthFilter">মাস নির্বাচন করুন:</label>
         <input type="month" id="monthFilter" />
+      </div>
+
+      <div class="reset-group">
         <button id="resetFilterBtn">রিসেট</button>
       </div>
+    </div>
+  </div>
 
       <div class="monthdaytable">
         <table id="filteredTable" border="1" style="margin-top: 10px; width: 100%;">
@@ -31,114 +48,359 @@ function transactionFilter() {
 
       <canvas id="filterSummaryChart" width="400" height="250" style="margin-top: 20px;"></canvas>
     </div>
+</div>
+
+<!-- টাইপ/ক্যাটাগরি ফিল্টার ট্যাব -->
+<div id="typeFilterTab" class="tab-content" style="display: none;">
+  <div class="Filter-monthday">
+<div class="monthday">
+  <h2>টাইপ/ক্যাটাগরি ফিল্টার</h2>
+
+  <label for="typeSelector">টাইপ:</label>
+  <select id="typeSelector">
+    <option value="">-- নির্বাচন করুন --</option>
+    <option value="income">আয়</option>
+    <option value="expense">ব্যয়</option>
+  </select>
+
+  <label for="categorySelector">ক্যাটাগরি:</label>
+  <select id="categorySelector" disabled>
+    <option value="">প্রথমে টাইপ নির্বাচন করুন</option>
+  </select>
+</div>
+    <div class="table-section">
+      <table id="typeFilteredTable" border="1" style="width: 100%; margin-top: 10px;">
+  <thead>
+    <tr>
+      <th>তারিখ</th>
+      <th>ক্যাটাগরি</th>
+      <th>টাকা</th>
+    </tr>
+  </thead>
+  <tbody id="typeFilteredTbody">
+    <tr>
+      <td colspan="3" class="message">টাইপ নির্বাচন করুন</td>
+    </tr>
+  </tbody>
+</table>
+    </div>
+  <canvas id="typeCategoryChart" width="400" height="400"></canvas>
+</div>
+  </div>
+  
   `;
 
-let filterSummaryChart = null;
+  let filterSummaryChart = null;
+  let currentUser = null;
 
-// বাংলা টাকা ফরম্যাট
-function formatTaka(amount) {
-  return new Intl.NumberFormat("bn-BD", {
-    style: "currency",
-    currency: "BDT",
-    minimumFractionDigits: 0,
-  }).format(amount || 0);
-}
+  firebase.auth().onAuthStateChanged((user) => {
+    if (user) currentUser = user;
+  });
 
-// ইংরেজি → বাংলা সংখ্যায় রূপান্তর
-function toBanglaNumber(number) {
-  const en = '0123456789';
-  const bn = '০১২৩৪৫৬৭৮৯';
-  return number.toString().replace(/[0-9]/g, d => bn[en.indexOf(d)]);
-}
-
-function drawFilterSummaryChart(label, income, expense) {
-  const ctx = document.getElementById('filterSummaryChart')?.getContext('2d');
-  if (!ctx) return;
-
-  if (filterSummaryChart) {
-    filterSummaryChart.destroy();
+  function formatTaka(amount) {
+    return new Intl.NumberFormat("bn-BD", {
+      style: "currency",
+      currency: "BDT",
+      minimumFractionDigits: 0,
+    }).format(amount || 0);
   }
 
-  // Pie Chart accepts only positive numbers
-  const safeIncome = Math.max(income, 0.01);
-  const safeExpense = Math.max(expense, 0.01);
-  const net = income - expense;
-  const safeTotal = Math.max(Math.abs(net), 0.01);
+  window.showTab = function (event, tabId) {
+    document.querySelectorAll('.tab-content').forEach(tab => tab.style.display = 'none');
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.getElementById(tabId).style.display = 'block';
+    if (event) event.currentTarget.classList.add('active');
+  };
 
-  const data = [safeIncome, safeExpense, safeTotal];
+  const dateFilter = document.getElementById("dateFilter");
+  const monthFilter = document.getElementById("monthFilter");
+  const resetBtn = document.getElementById("resetFilterBtn");
+  const filteredTable = document.querySelector("#filteredTable tbody");
+  const summaryEl = document.getElementById("monthlySummary");
+
+  resetBtn.addEventListener("click", () => {
+    dateFilter.value = "";
+    monthFilter.value = "";
+    filteredTable.innerHTML = "<tr><td colspan='4' class='message'>ফিল্টার প্রয়োগ করুন</td></tr>";
+    summaryEl.style.display = "none";
+    if (filterSummaryChart) {
+      filterSummaryChart.destroy();
+      filterSummaryChart = null;
+    }
+  });
+
+  dateFilter.addEventListener("change", () => {
+    monthFilter.value = "";
+    if (dateFilter.value) filterByDate(dateFilter.value);
+  });
+
+  monthFilter.addEventListener("change", () => {
+    dateFilter.value = "";
+    if (monthFilter.value) filterByMonth(monthFilter.value);
+  });
+
+  initTypeFilter();
+  
+
+let typeCategoryChart = null;
+
+function initTypeFilter() {
+  const typeSelector = document.getElementById("typeSelector");
+  const categorySelector = document.getElementById("categorySelector");
+
+  const incomeCategories = ["বেতন", "ব্যবসা", "অন্যান্য", "বাইক"];
+  const expenseCategories = [
+    "বাসা ভাড়া", "মোবাইল রিচার্জ", "বিদ্যুৎ বিল", "পরিবহন", "দোকান বিল",
+    "কেনাকাটা", "গাড়ির খরচ", "কাচা বাজার", "বাড়ি", "হাস্পাতাল",
+    "ব্যক্তিগত", "অন্যান্য", "গাড়ির তেল", "নাস্তা", "খাওয়া",
+    "চুলকাটানো", "লাইফ স্টাইল", "সঞ্চয়"
+  ];
+
+  function initCategories() {
+    const selectedType = typeSelector.value;
+    categorySelector.disabled = !selectedType;
+    categorySelector.innerHTML = selectedType
+      ? '<option value="">-- সব ক্যাটাগরি --</option>'
+      : '<option value="">প্রথমে টাইপ নির্বাচন করুন</option>';
+
+    if (selectedType) {
+      const categories = selectedType === "income" ? incomeCategories : expenseCategories;
+      categories.forEach(category => {
+        const option = document.createElement("option");
+        option.value = category;
+        option.textContent = category;
+        categorySelector.appendChild(option);
+      });
+    }
+  }
+
+  typeSelector.addEventListener("change", () => {
+    initCategories();
+    loadFilteredTransactionsAndDrawChart();
+  });
+
+  categorySelector.addEventListener("change", loadFilteredTransactionsAndDrawChart);
+
+  initCategories();
+  loadFilteredTransactionsAndDrawChart();
+}
+
+async function loadFilteredTransactionsAndDrawChart() {
+  const typeSelector = document.getElementById("typeSelector");
+  const categorySelector = document.getElementById("categorySelector");
+  const tbody = document.querySelector("#typeFilteredTable tbody");
+
+  const selectedType = typeSelector.value;
+  const selectedCategory = categorySelector.value;
+
+  tbody.innerHTML = '<tr><td colspan="3" class="message">লোড হচ্ছে...</td></tr>';
+
+  if (!currentUser) {
+    tbody.innerHTML = '<tr><td colspan="3" class="error">অনুগ্রহ করে লগইন করুন</td></tr>';
+    clearChart();
+    return;
+  }
+
+  if (!selectedType) {
+    tbody.innerHTML = '<tr><td colspan="3" class="message">টাইপ নির্বাচন করুন</td></tr>';
+    clearChart();
+    return;
+  }
+
+  try {
+    let query = db.collection("users").doc(currentUser.uid).collection("transactions").where("type", "==", selectedType);
+    if (selectedCategory) {
+      query = query.where("category", "==", selectedCategory);
+    }
+
+    const snapshot = await query.get();
+    const transactions = snapshot.docs.map(doc => doc.data()).sort((a, b) => b.timestamp - a.timestamp);
+
+    tbody.innerHTML = "";
+
+    if (transactions.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="3" class="message">কোনো লেনদেন পাওয়া যায়নি</td></tr>';
+      clearChart();
+      return;
+    }
+
+    let totalAmount = 0;
+    transactions.forEach(tx => {
+      totalAmount += Number(tx.amount);
+      const tr = document.createElement("tr");
+      tr.classList.add(tx.type === "income" ? "income-row" : "expense-row");
+      tr.innerHTML = `
+        <td>${tx.date || "N/A"}</td>
+        <td>${tx.category || "N/A"}</td>
+        <td>${formatTaka(tx.amount)}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    const totalRow = document.createElement("tr");
+    totalRow.classList.add("total-row");
+    totalRow.innerHTML = `
+      <td colspan="2" style="text-align:left;"><strong>মোট টাকা</strong></td>
+      <td><strong>${formatTaka(totalAmount)}</strong></td>
+    `;
+    tbody.appendChild(totalRow);
+
+    drawTypeCategoryChart(selectedType, transactions, selectedCategory);
+  } catch (error) {
+    console.error("Firestore Error:", error);
+    tbody.innerHTML = `<tr><td colspan="3" class="error">ডেটা লোডে সমস্যা হয়েছে</td></tr>`;
+    clearChart();
+  }
+}
+function drawTypeCategoryChart(type, transactions, selectedCategory = '') {
+  const ctx = document.getElementById("typeCategoryChart").getContext("2d");
+
+  if (typeCategoryChart) {
+    typeCategoryChart.destroy();
+  }
+
+  const categoryTotals = {};
+  transactions.forEach(tx => {
+    if (!categoryTotals[tx.category]) {
+      categoryTotals[tx.category] = 0;
+    }
+    categoryTotals[tx.category] += Number(tx.amount);
+  });
+
+  let labels = Object.keys(categoryTotals);
+  let data = labels.map(label => categoryTotals[label]);
+
+  if (selectedCategory && labels.includes(selectedCategory)) {
+    labels = [selectedCategory];
+    data = [categoryTotals[selectedCategory]];
+  }
+
   const totalSum = data.reduce((a, b) => a + b, 0);
 
-  filterSummaryChart = new Chart(ctx, {
+  let colors = [];
+  if (selectedCategory && labels.length === 1) {
+    colors = type === "income"
+      ? generateGreenShades(1)
+      : generateRedShades(1);
+  } else {
+    colors = type === "income"
+      ? generateGreenShades(labels.length)
+      : generateRedShades(labels.length);
+  }
+
+  typeCategoryChart = new Chart(ctx, {
     type: 'pie',
     data: {
-      labels: ['আয়', 'ব্যয়', 'মোট টাকা'],
+      labels: labels,
       datasets: [{
-        label: label,
         data: data,
-        backgroundColor: ['#4CAF50', '#F44336', '#2196F3'],
+        backgroundColor: colors,
         borderWidth: 1,
-      }],
+        borderColor: '#fff'
+      }]
     },
     options: {
       responsive: true,
+      animation: {
+        animateRotate: true,
+        duration: 1500,
+        easing: 'easeOutBounce',
+      },
       plugins: {
-        title: {
-          display: true,
-          text: `${label} (মোট: ${formatTaka(net)})`,
-          font: {
-            size: 18,
-            family: 'Noto Sans Bengali'
-          },
-          color: '#ffffff' // শিরোনাম সাদা
-        },
         legend: {
-          position: 'bottom',
+          position: 'right',
           labels: {
-            color: '#ffffff', // লেবেল সাদা
+            color: '#fff', // ✅ সাদা লেখা
             font: {
               size: 14,
-              family: 'Noto Sans Bengali'
-            }
-          }
-        },
-        tooltip: {
-          callbacks: {
-            label: function (tooltipItem) {
-              const label = tooltipItem.label || '';
-              const value = tooltipItem.raw || 0;
-              const percentage = ((value / totalSum) * 100).toFixed(1);
-              return `${label}: ${formatTaka(value)} (${toBanglaNumber(percentage)}%)`;
+              weight: 'bold'
             }
           }
         },
         datalabels: {
-          color: '#ffffff', // ডাটা লেবেল সাদা
+          color: "#fff",
           font: {
-            family: 'Noto Sans Bengali',
             weight: 'bold',
             size: 14
           },
-          formatter: function (value, context) {
-            const percent = ((value / totalSum) * 100).toFixed(1);
-            return `${toBanglaNumber(percent)}%`;
+          formatter: (value) => {
+            const percent = (value / totalSum) * 100;
+            return formatBanglaPercent(percent);
           }
+        },
+        tooltip: {
+          callbacks: {
+            label: function (context) {
+              const label = context.label || '';
+              const value = context.parsed;
+              const total = context.dataset.data.reduce((a, b) => a + b, 0);
+              const percentage = ((value / total) * 100).toFixed(1);
+              return `${label}: ${formatTaka(value)} (${percentage}%)`;
+            }
+          }
+        },
+        title: {
+          display: true,
+          text: type === "income" ? "আয়ের ক্যাটাগরি পাই চার্ট" : "ব্যয়ের ক্যাটাগরি পাই চার্ট",
+          font: {
+            size: 18,
+            weight: 'bold'
+          },
+          color: "#fff"
         }
       }
     },
     plugins: [ChartDataLabels]
   });
 }
+function generateGreenShades(count) {
+  const shades = [];
+  const baseHue = 120; // Green Hue
+  const saturation = 70;
+  const lightnessStart = 35;
+  const lightnessEnd = 65;
 
-  document.getElementById("resetFilterBtn").addEventListener("click", () => {
-    document.getElementById("dateFilter").value = "";
-    document.getElementById("monthFilter").value = "";
-    document.querySelector("#filteredTable tbody").innerHTML = "";
-    document.getElementById("monthlySummary").style.display = "none";
-    if (filterSummaryChart) {
-      filterSummaryChart.destroy();
-      filterSummaryChart = null;
-    }
+  for (let i = 0; i < count; i++) {
+    const lightness = lightnessStart + ((lightnessEnd - lightnessStart) / (count - 1 || 1)) * i;
+    shades.push(`hsl(${baseHue}, ${saturation}%, ${lightness}%)`);
+  }
+
+  return shades;
+}
+
+function generateRedShades(count) {
+  const shades = [];
+  const baseHue = 0; // Red Hue
+  const saturation = 80;
+  const lightnessStart = 40;
+  const lightnessEnd = 70;
+
+  for (let i = 0; i < count; i++) {
+    const lightness = lightnessStart + ((lightnessEnd - lightnessStart) / (count - 1 || 1)) * i;
+    shades.push(`hsl(${baseHue}, ${saturation}%, ${lightness}%)`);
+  }
+
+  return shades;
+}
+
+function formatTaka(amount) {
+  return Number(amount).toLocaleString("bn-BD", {
+    style: "currency",
+    currency: "BDT",
+    minimumFractionDigits: 0
   });
+}
+
+function formatBanglaPercent(value) {
+  return value.toFixed(1).toLocaleString("bn-BD") + "%";
+}
+
+function clearChart() {
+  if (typeCategoryChart) {
+    typeCategoryChart.destroy();
+    typeCategoryChart = null;
+  }
+}
 
   document.getElementById("dateFilter").addEventListener("change", () => {
     const date = document.getElementById("dateFilter").value;
@@ -159,65 +421,88 @@ function drawFilterSummaryChart(label, income, expense) {
   });
 
   function filterByDate(userId, date) {
-    const db = firebase.firestore();
-    const tbody = document.querySelector("#filteredTable tbody");
-    tbody.innerHTML = "";
+  const db = firebase.firestore();
+  const tbody = document.querySelector("#filteredTable tbody");
+  tbody.innerHTML = "";
 
-    db.collection("users")
-      .doc(userId)
-      .collection("transactions")
-      .where("date", "==", date)
-      .get()
-      .then(snapshot => {
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          const income = data.type === "income" ? formatTaka(data.amount) : "";
-          const expense = data.type === "expense" ? formatTaka(data.amount) : "";
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td>${data.date || ""}</td>
-            <td>${data.category || ""}</td>
-            <td>${income}</td>
-            <td>${expense}</td>
-          `;
-          tbody.appendChild(tr);
-        });
+  db.collection("users")
+    .doc(userId)
+    .collection("transactions")
+    .where("date", "==", date)
+    .get()
+    .then(snapshot => {
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const income = data.type === "income" ? formatTaka(data.amount) : "";
+        const expense = data.type === "expense" ? formatTaka(data.amount) : "";
+
+        const tr = document.createElement("tr");
+
+        // ✅ রঙের জন্য CSS ক্লাস অ্যাড
+        if (data.type === "income") {
+          tr.classList.add("income-row");
+        } else if (data.type === "expense") {
+          tr.classList.add("expense-row");
+        }
+
+        tr.innerHTML = `
+          <td>${data.date || ""}</td>
+          <td>${data.category || ""}</td>
+          <td>${income}</td>
+          <td>${expense}</td>
+        `;
+        tbody.appendChild(tr);
       });
-  }
+    });
+}
 
   function filterByMonth(userId, month) {
-    const db = firebase.firestore();
-    const tbody = document.querySelector("#filteredTable tbody");
-    tbody.innerHTML = "";
+  const db = firebase.firestore();
+  const tbody = document.querySelector("#filteredTable tbody");
+  tbody.innerHTML = "";
 
-    const [year, mon] = month.split("-");
-    const start = new Date(`${year}-${mon}-01`);
-    const end = new Date(start);
-    end.setMonth(end.getMonth() + 1);
+  const [year, mon] = month.split("-");
+  const start = new Date(`${year}-${mon}-01`);
+  const end = new Date(start);
+  end.setMonth(end.getMonth() + 1);
 
-    db.collection("users")
-      .doc(userId)
-      .collection("transactions")
-      .where("timestamp", ">=", start)
-      .where("timestamp", "<", end)
-      .orderBy("timestamp", "asc")
-      .get()
-      .then(snapshot => {
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          const income = data.type === "income" ? formatTaka(data.amount) : "";
-          const expense = data.type === "expense" ? formatTaka(data.amount) : "";
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td>${data.date || ""}</td>
-            <td>${data.category || ""}</td>
-            <td>${income}</td>
-            <td>${expense}</td>
-          `;
-          tbody.appendChild(tr);
-        });
+  db.collection("users")
+    .doc(userId)
+    .collection("transactions")
+    .where("timestamp", ">=", start)
+    .where("timestamp", "<", end)
+    .orderBy("timestamp", "asc")
+    .get()
+    .then(snapshot => {
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const income = data.type === "income" ? formatTaka(data.amount) : "";
+        const expense = data.type === "expense" ? formatTaka(data.amount) : "";
+
+        const tr = document.createElement("tr");
+
+        // Add row color class
+        if (data.type === "income") {
+          tr.classList.add("income-row");
+        } else if (data.type === "expense") {
+          tr.classList.add("expense-row");
+        }
+
+        tr.innerHTML = `
+          <td>${data.date || ""}</td>
+          <td>${data.category || ""}</td>
+          <td>${income}</td>
+          <td>${expense}</td>
+        `;
+        tbody.appendChild(tr);
       });
-  }
+    });
+}
+
+// Helper function to format currency (example)
+function formatTaka(amount) {
+  return '৳' + Number(amount).toLocaleString('bn-BD');
+}
 
   function calculateDailySummary(userId, date) {
     const selectedDate = new Date(date);
@@ -356,4 +641,82 @@ function drawFilterSummaryChart(label, income, expense) {
       drawFilterSummaryChart(`${monthLabel} - আয় বনাম ব্যয়`, income, expense);
     });
   }
+  let summaryChart = null;
+
+function formatBanglaPercent(value) {
+  const banglaDigits = ['০','১','২','৩','৪','৫','৬','৭','৮','৯'];
+  let str = value.toFixed(1) + '%';
+  return str.replace(/\d/g, d => banglaDigits[d]);
+}
+
+function drawFilterSummaryChart(title, income, expense) {
+  const total = income - expense;
+  const ctx = document.getElementById("filterSummaryChart").getContext("2d");
+
+  if (summaryChart) {
+    summaryChart.destroy();
+  }
+
+  const dataValues = [income, expense, Math.abs(total)];
+  const totalSum = dataValues.reduce((a,b) => a + b, 0);
+
+  summaryChart = new Chart(ctx, {
+    type: "pie",
+    data: {
+      labels: ["আয়", "ব্যয়", "মোট টাকা"],
+      datasets: [{
+        data: dataValues,
+        backgroundColor: ["green", "red", "blue"],
+        borderColor: '#fff',
+        borderWidth: 2,
+        hoverOffset: 30,
+      }]
+    },
+    options: {
+      responsive: true,
+      animation: {
+        animateRotate: true,
+        duration: 1500,
+        easing: 'easeOutBounce',
+      },
+      plugins: {
+        legend: {
+          position: "bottom",
+          labels: {
+            font: {
+              size: 14,
+              weight: 'bold',
+            },
+            color: "#fff"
+          }
+        },
+        datalabels: {
+          color: "#fff",
+          font: {
+            weight: 'bold',
+            size: 14
+          },
+          formatter: (value) => {
+            const percent = (value / totalSum) * 100;
+            return formatBanglaPercent(percent);
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: (context) => {
+              let label = context.label;
+              let val = context.raw;
+              if (label === "মোট টাকা" && total < 0) {
+                val = -val;
+              }
+              return `${label}: ৳${val.toLocaleString("bn-BD")}`;
+            }
+          }
+        }
+      }
+    },
+    plugins: [ChartDataLabels]
+  });
+}
+
 }
