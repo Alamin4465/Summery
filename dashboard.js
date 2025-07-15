@@ -4,18 +4,29 @@ function loadDashboardSummary() {
     <h2 class="titel">ড্যাশবোর্ড</h2>
 
     <div id="summary" class="summary-container">
-      <div class="summary-card">
-        <h3>মোট আয়</h3>
-        <p><span id="totalIncome">০</span> টাকা</p>
-      </div>
-      <div class="summary-card">
-        <h3>মোট ব্যয়</h3>
-        <p><span id="totalExpense">০</span> টাকা</p>
-      </div>
-      <div class="summary-card">
-        <h3>বর্তমান ব্যালেন্স</h3>
-        <p><span id="balance">০</span> টাকা</p>
-      </div>
+            <div class="summary-card income">
+                <div class="summary-icon">
+                    <i class="fas fa-money-bill-wave"></i>
+                </div>
+                <h3>মোট আয়</h3>
+                <p><span id="totalIncome">৮৫,৬৫০</span> টাকা</p>
+            </div>
+            
+            <div class="summary-card expense">
+                <div class="summary-icon">
+                    <i class="fas fa-credit-card"></i>
+                </div>
+                <h3>মোট ব্যয়</h3>
+                <p><span id="totalExpense">৬২,৪২০</span> টাকা</p>
+            </div>
+            
+            <div class="summary-card balance">
+                <div class="summary-icon">
+                    <i class="fas fa-wallet"></i>
+                </div>
+                <h3>বর্তমান ব্যালেন্স</h3>
+                <p><span id="balance">২৩,২৩০</span> টাকা</p>
+            </div>
     </div>
 
     <div class="chartstyle">
@@ -175,9 +186,12 @@ function drawCategoryChart(incomeData, expenseData) {
     data: {
       labels,
       datasets: [{
-        data: values,
-        backgroundColor: colors
-      }]
+  data: values,
+  backgroundColor: colors, // ← এখানে কমা দরকার ছিল
+  borderWidth: 2,
+  hoverOffset: 30,
+  borderColor: '#fff'
+}]
     },
     options: {
       responsive: true,
