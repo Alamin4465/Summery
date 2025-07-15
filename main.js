@@ -13,8 +13,17 @@ firebase.auth().onAuthStateChanged(user => {
   }
 });
 
-// Menu Events
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', function () {
+  // Animation on card load
+  const cards = document.querySelectorAll('.summary-card');
+  cards.forEach((card, index) => {
+    setTimeout(() => {
+      card.style.opacity = '1';
+      card.style.transform = 'translateY(0)';
+    }, 300 * index);
+  });
+
+  // Navigation button events
   document.getElementById('nav-dashboard')?.addEventListener('click', () => activate(document.getElementById('nav-dashboard'), 'ড্যাশবোর্ড'));
   document.getElementById('nav-forms')?.addEventListener('click', () => activate(document.getElementById('nav-forms'), 'ফ্রমস'));
   document.getElementById('nav-submit')?.addEventListener('click', () => activate(document.getElementById('nav-submit'), 'ট্রানজেকশন'));
@@ -28,6 +37,7 @@ function activate(button, sectionName) {
   button.classList.add('active');
 
   const content = document.getElementById('content');
+  content.innerHTML = `<p>লোড হচ্ছে...</p>`;
 
   switch (sectionName) {
     case 'প্রোফাইল তথ্য':
