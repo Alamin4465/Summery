@@ -8,39 +8,37 @@
 }
 
 body {
-    padding: 5px;
-    line-height: 1.7;
-    font-family: 'Segoe UI', sans-serif;
-    display: flex;
-    background: url('https://as1.ftcdn.net/jpg/06/86/04/24/1000_F_686042483_VZwkSaSfHCHCkO0cmX8Ggpr8e3S823za.webp') no-repeat center center fixed;
-    background-size: cover;
-    flex-direction: column;
-    width:800px;
-}
+  padding: 5px;
+  line-height: 1.7;
+  font-family: 'Segoe UI', sans-serif;
+  display: flex;
+  background: url('https://as1.ftcdn.net/jpg/06/86/04/24/1000_F_686042483_VZwkSaSfHCHCkO0cmX8Ggpr8e3S823za.webp') no-repeat center center fixed;
+  background-size: cover;
+  flex-direction: column;
+  width: 800px;
+  backdrop-filter: blur(8px);
+  }
 
 #topbar {
-    width:800px;
+  width: 800px;
   padding: 10px;
   border-bottom: 1px solid #ddd;
 }
 
 .menu-row {
   display: flex;
-  flex-wrap: wrap; 
+  flex-wrap: wrap;
   gap: 10px;
   justify-content: center;
-    width:800px;
-    
+  width: 800px;
 }
-
 
 .menu-button {
   display: flex;
   align-items: center;
   justify-content: space-between;
   backdrop-filter: blur(10px);
-  background-color: rgba(255, 255, 255, 0.15);
-  padding: 15px;
+  background-color: rgba(0, 128, 0, 0.3);  padding: 15px;
   border-radius: 12px;
   font-size: 16px;
   font-weight: 600;
@@ -48,7 +46,7 @@ body {
   cursor: pointer;
   transition: 0.3s;
   border: none;
-    width:130px;
+  width: 130px;
 }
 
 .menu-button:hover {
@@ -66,35 +64,39 @@ body {
   color: white;
   font-size: 16px;
   box-shadow: 0 0 8px rgba(0, 132, 255, 0.8);
-    column-gap: 10px;
+  column-gap: 10px;
 }
 
 .menu-button.active {
-  background: rgba(255, 0, 0, 0.6);
+  background-color: rgba(255, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
   color: white;
+   border-bottom: 4px solid red;
 }
 
 .menu-button.active .icon {
   background: rgba(0, 255, 150, 0.9);
   box-shadow: 0 0 15px rgba(0, 255, 150, 0.8);
 }
-.content{
-    background: rgba(255, 255, 255, 0.4);
-    width:800px;
+
+.content {
+  backdrop-filter: blur(8px);
+  background-color: rgba(255, 255, 255, 0.15);
+  width: 800px;
 }
 
 .titel {
   border: 2px solid rgba(255, 255, 255, 0.15);
   background: rgba(0, 0, 255, 0.2);
   backdrop-filter: blur(10px);
-  color: white; /* লেখার রঙ সাদা */
-  text-align: center; /* লেখাকে মাঝখানে আনো */
-  padding: 10px 20px; /* ভিতরের ফাঁকা জায়গা */
-  border-radius: 10px; /* কোণ গুলো গোল করা */
-  margin: 20px auto; /* মাঝখানে আনো এবং কিছু ফাঁকা জায়গা রাখো */
-  font-size: 24px; /* লেখার আকার */
+  color: white;
+  text-align: center;
+  padding: 10px 20px;
+  border-radius: 10px;
+  margin: 20px auto;
+  font-size: 24px;
   font-weight: bold;
-    width:800px;
+  width: 800px;
 }
 
 /* লোগো স্টাইল */
@@ -121,7 +123,7 @@ body {
 
 /* সামারি কন্টেইনার */
 .summary-container {
-  width: 800px; /* ✅ ভুল ছিল weidth */
+  width: 800px;
   margin: 0 auto 40px;
   display: flex;
   justify-content: center;
@@ -251,27 +253,24 @@ body {
 }
 
 canvas, 
-#incomexpensescatagori{
+#incomexpensescatagori {
   width: 380px !important;
   height: auto;
   display: block;
-  margin: 0 auto; /* চার্টকে সেন্টারে আনতে */
+  margin: 0 auto;
 }
 
-.chartstyle
-{
+.chartstyle {
   display: flex;
-  gap: 20px;          /* দুই চার্টের মাঝে ফাঁকা জায়গা */
-  align-items: center; /* উভয়ের ভেরটিকাল অবস্থান একসাথে */
-  justify-content: center; 
-   backdrop-filter: blur(10px);
+  gap: 20px;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(10px);
   background-color: rgba(255, 255, 255, 0.15);
   border-radius: 20px;
-    width:800px;
-    height: 380px;
+  width: 800px;
+  height: 380px;
 }
-
-
 
 /* Filter বাটন */
 #filterButtons {
@@ -300,7 +299,6 @@ canvas,
   color: white;
 }
 
-
 /* Edit/Delete বাটন */
 .editBtn,
 .deleteBtn {
@@ -313,12 +311,12 @@ canvas,
 }
 
 .editBtn {
-  background-color: #28a745; /* সবুজ */
+  background-color: #28a745;
   color: white;
 }
 
 .deleteBtn {
-  background-color: #dc3545; /* লাল */
+  background-color: #dc3545;
   color: white;
 }
 
@@ -334,17 +332,18 @@ canvas,
 h2.titel, h3 {
   margin-bottom: 15px;
 }
+
 /* ফর্ম কনটেইনার */
-#transactionForm {
+#transactionForm, 
+#loanForm {
   border-radius: 12px;
   padding: 20px;
   max-width: 400px;
-  margin: 40px 0 40px 40px; /* বাম দিকে 40px */
+  margin: 40px 0 40px 40px;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(10px);
   background-color: rgba(255, 255, 255, 0.15);
 }
-
 
 /* ইনপুট, সিলেক্ট ও বোতাম */
 .form-input,
@@ -356,7 +355,6 @@ h2.titel, h3 {
   border-radius: 8px;
   font-size: 16px;
   box-sizing: border-box;
-    
 }
 
 /* ইনপুট ও সিলেক্ট ফিল্ডের স্টাইল */
@@ -369,7 +367,7 @@ h2.titel, h3 {
 /* বাটনের স্টাইল */
 .form-button {
   backdrop-filter: blur(10px);
-  background-color:  rgba(0, 128, 0, 0.4);
+  background-color: rgba(0, 128, 0, 0.4);
   color: white;
   cursor: pointer;
   transition: background-color 0.3s ease;
@@ -378,7 +376,6 @@ h2.titel, h3 {
 .form-button:hover {
   background-color: red;
 }
-
 
 /* সব টেবিলের জন্য আধুনিক, ইউনিফর্ম ডিজাইন */
 .transaction-table,
@@ -435,29 +432,26 @@ h2.titel, h3 {
 
 /* ফিল্টার সেকশন */
 .income-row {
-  background-color: rgba(0, 128, 0, 0.3); /* হালকা সবুজ */
-    font-weight: bold;
+  background-color: rgba(0, 128, 0, 0.3);
+  font-weight: bold;
   border: 2px solid #3498db;
 }
 
-/* ব্যয় হলে লাল transparent background */
 .expense-row {
-  background-color: rgba(255, 0, 0, 0.3); /* হালকা লাল */
-    font-weight: bold;
+  background-color: rgba(255, 0, 0, 0.3);
+  font-weight: bold;
   border: 2px solid #3498db;
 }
 
 .income-icon::before {
   content: "💰 ";
   color: green;
-    
-    
 }
 
 .expense-icon::before {
   content: "💸 ";
   color: red;
-    font-weight: bold;
+  font-weight: bold;
 }
 
 /* Chart Section */
@@ -466,45 +460,43 @@ h2.titel, h3 {
 }
 
 /* মাস ও তারিখ ফিল্টার স্টাইল */
-
-
 #monthlySummary th,
 #monthlySummary td {
   border: 2px solid #000;
   padding: 8px;
-    font-weight: bold;
-    font-size: 1.2em;
+  font-weight: bold;
+  font-size: 1.2em;
 }
 
 #monthlySummary thead tr {
   background-color: #663399;
   color: orange;
-    font-weight: bold;
+  font-weight: bold;
 }
 
-									#monthlySummary tbody tr:nth-child(1) td:nth-child(2),
-    #monthlySummary tbody tr:nth-child(1) td:nth-child(3)    {
+#monthlySummary tbody tr:nth-child(1) td:nth-child(2),
+#monthlySummary tbody tr:nth-child(1) td:nth-child(3) {
   font-weight: bold;
-    font-size: 1.2em;
-    color:orange;
+  font-size: 1.2em;
+  color: orange;
 }
-    #monthlySummary tbody tr:nth-child(2) td:nth-child(1),
-    #monthlySummary tbody tr:nth-child(2) td:nth-child(2)    {
+
+#monthlySummary tbody tr:nth-child(2) td:nth-child(1),
+#monthlySummary tbody tr:nth-child(2) td:nth-child(2) {
   font-weight: bold;
-    font-size: 1.2em;
-    color:green;
+  font-size: 1.2em;
+  color: green;
 }
-    
 
 #monthlySummary tbody tr:nth-child(3) td:nth-child(1),
 #monthlySummary tbody tr:nth-child(3) td:nth-child(3) {
   color: red;
-    font-weight: bold;
+  font-weight: bold;
 }
-    #monthlySummary tbody tr:nth-child(3) td:nth-child(4)
- {
+
+#monthlySummary tbody tr:nth-child(3) td:nth-child(4) {
   color: blue;
-    font-weight: bold;
+  font-weight: bold;
 }
 
 #monthlySummary tbody tr:last-child {
@@ -514,15 +506,16 @@ h2.titel, h3 {
 }
 
 .tabs {
-  
   display: flex;
   gap: 10px;
   margin-bottom: 15px;
 }
 
 .tab-btn {
- background-color: rgba(76, 175, 80, 0.9);
-			padding: 12px;
+  
+  backdrop-filter: blur(10px);
+  background-color: rgba(0, 128, 0, 0.3);
+  padding: 12px;
   border-radius: 12px;
   font-size: 16px;
   font-weight: 600;
@@ -535,12 +528,13 @@ h2.titel, h3 {
 }
 
 .tab-btn.active {
-  background: rgba(76, 175, 80, 0.9);
+  background-color: rgba(255, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
   color: white;
   border-bottom: 4px solid red;
 }
 
- h2 {
+h2 {
   font-size: 20px;
   text-align: center;
   margin-bottom: 20px;
@@ -549,40 +543,30 @@ h2.titel, h3 {
 
 /* Label and select styling */
 #typeSelector,
-.typeSelector{
+.typeSelector {
   padding: 10px;
   margin: 5px 10px 15px 0;
   border: 1px solid #007bff;
   border-radius: 6px;
-    font-size: 16px;
-}
-
-#categorySelector,
-.categorySelector{
-  padding: 10px;
-  margin: 5px 10px 15px 0;
-  border: 1px solid #007bff;
-  border-radius: 6px;
-    font-size: 16px;
+  font-size: 16px;
 }
 
 #categorySelector,
 .categorySelector {
-  border-color: #007bff;
-  outline: none;
+  padding: 10px;
+  margin: 5px 10px 15px 0;
+  border: 1px solid #007bff;
+  border-radius: 6px;
+  font-size: 16px;
 }
 
-/* Disabled select styling */
-#categorySelector,
-.categorySelector select:disabled {
+.categorySelector:disabled {
   background-color: #eee;
   color: #888;
   cursor: not-allowed;
 }
 
-
 .monthday {
-  background-color: ;
   padding: 10px;
   border-radius: 12px;
   width: 820px;
@@ -604,7 +588,6 @@ h2.titel, h3 {
   flex-wrap: wrap;
   backdrop-filter: blur(10px);
   background-color: rgba(255, 255, 255, 0.15);
-
 }
 
 .filter-group {
@@ -618,7 +601,7 @@ h2.titel, h3 {
   font-size: 16px;
   margin-bottom: 6px;
   color: brown;
-    font-weight: bold;
+  font-weight: bold;
 }
 
 .filter-group input {
@@ -644,29 +627,18 @@ h2.titel, h3 {
   border-radius: 8px;
   cursor: pointer;
   transition: background-color 0.3s ease;
-  height: 42px; /* input height এর সাথে মিল */
+  height: 42px;
 }
 
 #resetFilterBtn:hover {
   background-color: #d32f2f;
 }
 
-  .reset-group {
-    justify-content: flex-start;
-  }
-}
-
 .total-row {
-  background-color: purple;  /* বেগুনি ব্যাকগ্রাউন্ড */
-  color: yellow;             /* হলুদ ফন্ট */
+  background-color: purple;
+  color: yellow;
   font-weight: bold;
 }
 
 .total-row td {
-  text-align: left;          /* বাম পাশে লেখা */
-  padding: 8px;
-  background-color: purple;  /* বেগুনি ব্যাকগ্রাউন্ড */
-  color: yellow;             /* হলুদ ফন্ট */
-  font-weight: bold;
-  font-size: 22px;
-}
+  text-align: left;
