@@ -47,7 +47,7 @@ function activate(button, sectionName) {
       loadDashboardSummary();
       break;
     case 'ফ্রমস':
-      renderForm();
+      lonefrom();
       break;
     case 'ফিল্টার':
       transactionFilter();
