@@ -436,22 +436,29 @@ function clearChart() {
         const income = data.type === "income" ? formatTaka(data.amount) : "";
         const expense = data.type === "expense" ? formatTaka(data.amount) : "";
 
-        const tr = document.createElement("tr");
+        const row = document.createElement("tr");
 
-        // ✅ রঙের জন্য CSS ক্লাস অ্যাড
+        // income বা expense অনুযায়ী ক্লাস সেট
         if (data.type === "income") {
-          tr.classList.add("income-row");
+          row.classList.add("income-row");
         } else if (data.type === "expense") {
-          tr.classList.add("expense-row");
+          row.classList.add("expense-row");
         }
 
-        tr.innerHTML = `
+        // লোন ক্যাটাগরি অনুযায়ী অতিরিক্ত ক্লাস যোগ
+        if (data.category === "লোন গ্রহণ") {
+          row.classList.add("loan-taken");
+        } else if (data.category === "লোন পরিশোধ") {
+          row.classList.add("loan-repaid");
+        }
+
+        row.innerHTML = `
           <td>${data.date || ""}</td>
           <td>${data.category || ""}</td>
           <td>${income}</td>
           <td>${expense}</td>
         `;
-        tbody.appendChild(tr);
+        tbody.appendChild(row);
       });
     });
 }
@@ -479,26 +486,32 @@ function clearChart() {
         const income = data.type === "income" ? formatTaka(data.amount) : "";
         const expense = data.type === "expense" ? formatTaka(data.amount) : "";
 
-        const tr = document.createElement("tr");
+        const row = document.createElement("tr");
 
-        // Add row color class
+        // income বা expense অনুযায়ী ক্লাস সেট
         if (data.type === "income") {
-          tr.classList.add("income-row");
+          row.classList.add("income-row");
         } else if (data.type === "expense") {
-          tr.classList.add("expense-row");
+          row.classList.add("expense-row");
         }
 
-        tr.innerHTML = `
+        // লোন ক্যাটাগরি অনুযায়ী অতিরিক্ত ক্লাস যোগ
+        if (data.category === "লোন গ্রহণ") {
+          row.classList.add("loan-taken");
+        } else if (data.category === "লোন পরিশোধ") {
+          row.classList.add("loan-repaid");
+        }
+
+        row.innerHTML = `
           <td>${data.date || ""}</td>
           <td>${data.category || ""}</td>
           <td>${income}</td>
           <td>${expense}</td>
         `;
-        tbody.appendChild(tr);
+        tbody.appendChild(row);
       });
     });
 }
-
 // Helper function to format currency (example)
 function formatTaka(amount) {
   return '৳' + Number(amount).toLocaleString('bn-BD');
@@ -529,7 +542,8 @@ function formatTaka(amount) {
         if (d.type === "income") income += d.amount || 0;
         else if (d.type === "expense") expense += d.amount || 0;
       });
-
+      
+      const daytotal =income - expense;
       const total = prevBalance + income - expense;
       const dateLabel = new Date(date).toLocaleDateString("bn-BD", { year: "numeric", month: "short", day: "numeric" });
 
@@ -560,7 +574,7 @@ function formatTaka(amount) {
             <td>আজকের ব্যয়</td>
             <td></td>
             <td>${formatTaka(expense)}</td>
-            <td>${formatTaka(total)}</td>
+            <td>${formatTaka(daytotal)}</td>
           </tr>
           <tr>
             <td colspan="3">মোট</td>
@@ -598,7 +612,7 @@ function formatTaka(amount) {
         if (d.type === "income") income += d.amount || 0;
         else if (d.type === "expense") expense += d.amount || 0;
       });
-
+      const monthtotal =income - expense;
       const total = prevBalance + income - expense;
       const monthLabel = start.toLocaleString("bn-BD", { year: 'numeric', month: 'long' });
 
@@ -629,7 +643,7 @@ function formatTaka(amount) {
             <td>মাসের ব্যয়</td>
             <td></td>
             <td>${formatTaka(expense)}</td>
-            <td>${formatTaka(total)}</td>
+            <td>${formatTaka(monthtotal)}</td>
           </tr>
           <tr>
             <td colspan="3">মোট</td>
