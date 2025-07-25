@@ -78,7 +78,16 @@ function fetchTransactionsRealtime() {
         allTransactions.push({ id: doc.id, ...data });
 
         const row = document.createElement("tr");
-        row.className = (type === "income") ? "income-row" : "expense-row";
+
+// প্রথমে income/expense ক্লাস সেট করা
+row.className = (type === "income") ? "income-row" : "expense-row";
+
+// লোন ক্যাটাগরি চেক করে অতিরিক্ত ক্লাস অ্যাড করা
+if (data.category === "লোন গ্রহণ") {
+  row.classList.add("loan-taken");
+} else if (data.category === "লোন পরিশোধ") {
+  row.classList.add("loan-repaid");
+}
         row.innerHTML = `
           <td>${data.date || ""}</td>
           <td>${type === "income" ? "আয়" : "ব্যয়"}</td>
