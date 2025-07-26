@@ -433,12 +433,14 @@ h2.titel, h3 {
 /* ফিল্টার সেকশন */
 .income-row {
   background-color: rgba(0, 128, 0, 0.3);
+  backdrop-filter: blur(10px);
   font-weight: bold;
   border: 2px solid #3498db;
 }
 
 .expense-row {
   background-color: rgba(255, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
   font-weight: bold;
   border: 2px solid #3498db;
 }
@@ -641,4 +643,50 @@ h2 {
 }
 
 .total-row td {
+  text-align: left;}
+.loan-taken td{
+  background-color: rgba(255, 128, 0, 0.2); /* হালকা লাল */
+}
+
+.loan-repaid td{
+  background-color: rgba(173, 255, 47, 0.2) /* হালকা সবুজ */
+}
+#user-name {
   text-align: left;
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #4CAF50;
+  margin: 10px 0;
+}
+#today-saving-status {
+  position: relative;
+  overflow: hidden;
+  white-space: nowrap;
+  width: 100%;
+  background-color: rgba(0, 128, 0, 0.3);
+  backdrop-filter: blur(10px);
+  color: white;
+  font-size: 1.2rem;
+  font-weight: bold;
+  padding: 10px 0;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+#today-saving-status span {
+  display: inline-block;
+  padding-left: 100%;
+  animation: scrollText 30s linear infinite;
+}
+
+@keyframes scrollText {
+  0%   { transform: translateX(0%); }
+  100% { transform: translateX(-100%); }
+}
+
+#today-saving-status.warning {
+  background-color: rgba(255, 0, 0, 0.3);
+  backdrop-filter: blur(10px);}
+
+#today-saving-status.error {
+  background: linear-gradient(135deg, #f44336, #d32f2f);
+}
