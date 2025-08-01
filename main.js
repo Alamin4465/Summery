@@ -63,13 +63,24 @@ function activate(button, sectionName) {
 // ========== আজকের সঞ্চয় চেক ==========
 async function checkTodaySavingFromTransactions(uid) {
   const now = new Date();
-  const today = now.toISOString().split('T')[0]; // yyyy-mm-dd
+
+  // আজকের তারিখ yyyy-mm-dd ফরম্যাটে
+  const year = now.getFullYear();
+  const month = (now.getMonth() + 1).toString().padStart(2, '0');
+  const day = now.getDate().toString().padStart(2, '0');
+  const today = `${year}-${month}-${day}`;
+
+  // বাংলা তারিখ ফরম্যাট (১-৮-২৫ এর মতো)
+  const todayFormattedForMsg = `${convertToBanglaNumber(day)}-${convertToBanglaNumber(month)}-${convertToBanglaNumber(year.toString().slice(2))}`;
 
   try {
-    const snapshot = await firebase.firestore()
+    const transactionsRef = firebase.firestore()
       .collection("users")
       .doc(uid)
-      .collection("transactions")
+      .collection("transactions");
+
+    // আজকের সঞ্চয় চেক
+    const todaySnapshot = await transactionsRef
       .where("category", "==", "সঞ্চয়")
       .where("date", "==", today)
       .get();
@@ -77,28 +88,59 @@ async function checkTodaySavingFromTransactions(uid) {
     const statusDiv = document.getElementById('today-saving-status');
     if (!statusDiv) return;
 
-    if (!snapshot.empty) {
+    // আজ পর্যন্ত কয়দিন সঞ্চয় হয়েছে (আজকের দিন পর্যন্ত ধরে)
+    const totalSnapshot = await transactionsRef
+      .where("category", "==", "সঞ্চয়")
+      .get();
+    const dayCount = totalSnapshot.size;
+
+    if (!todaySnapshot.empty) {
+      // আজকের সঞ্চয় হয়েছে
+
+      // আজকের দিনটি n তম দিন
+      const todayDayNumber = dayCount;
+
+      // আগামীকালের তারিখ ও বাংলা ফরম্যাট
+      const tomorrowDate = new Date(now);
+      tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+      const tomorrowFormatted = new Intl.DateTimeFormat('bn-BD', {
+        year: 'numeric', month: '2-digit', day: '2-digit'
+      }).format(tomorrowDate);
+
+      // আগামীকালের n তম দিন ও সঞ্চয়ের টাকা (বিজোড় সূত্র)
+      const tomorrowDayNumber = todayDayNumber + 1;
+      const tomorrowSavingAmount = 2 * tomorrowDayNumber - 1;
+
+      const tomorrowText = `আগামীকাল (${tomorrowFormatted}) - ${convertToBanglaNumber(tomorrowDayNumber)}তম দিন, সঞ্চয় হবে <strong>${convertToBanglaNumber(tomorrowSavingAmount)} টাকা</strong>।`;
+
       statusDiv.className = 'success';
-      statusDiv.innerHTML = `<span>আজকের (${today}) সঞ্চয় করা হয়েছে ✅</span>`;
-      setTimeout(() => {
-        statusDiv.innerHTML = '';
-        statusDiv.className = '';
-      }, 600000); // 10 মিনিট পর লুকানো হবে
+      statusDiv.innerHTML = `<div class="scroll-text">✅ আজকের (${todayFormattedForMsg}) সঞ্চয় সম্পন্ন হয়েছে। ${tomorrowText}</div>`;
 
     } else {
+      // আজকের সঞ্চয় নেই, আগামীকালের মেসেজ দেখাবেনা
+
+      // আজকের দিন n তম দিন হিসাব (যেহেতু আজ জমা হয়নি, আজকের দিন হবে dayCount+1)
+      const todayDayNumber = dayCount + 1;
+      const todaySavingAmount = 2 * todayDayNumber - 1;
+
       statusDiv.className = 'warning';
-      statusDiv.innerHTML = `<span>আজকের (${today}) সঞ্চয় হয়নি ⚠️</span>`;
+      statusDiv.innerHTML = `<div class="scroll-text">⚠️ ${todayFormattedForMsg} তারিখে সঞ্চয় জমা হয়নি। আজকের সঞ্চয়ের টাকা: <strong>${convertToBanglaNumber(todaySavingAmount)}</strong> টাকা।</div>`;
     }
+
   } catch (error) {
     console.error("সঞ্চয় চেক করতে সমস্যা:", error);
     const statusDiv = document.getElementById('today-saving-status');
     if (statusDiv) {
       statusDiv.className = 'error';
-      statusDiv.innerHTML = `স্ট্যাটাস লোড করতে সমস্যা হয়েছে ❌`;
+      statusDiv.innerHTML = `<div class="scroll-text">❌ সঞ্চয় স্ট্যাটাস লোড করতে সমস্যা হয়েছে।</div>`;
     }
   }
 }
 
+function convertToBanglaNumber(number) {
+  const banglaDigits = '০১২৩৪৫৬৭৮৯';
+  return number.toString().replace(/[0-9]/g, d => banglaDigits[d]);
+}
 // ========== ইউজার নাম দেখানো ==========
 function showUserName(user) {
   const userNameDiv = document.getElementById('user-name');
