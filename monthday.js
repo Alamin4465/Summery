@@ -262,7 +262,7 @@ function transactionFilter() {
 
       // === সঞ্চয় চার্ট ===
       if (selectedType === "expense" && selectedCategory === "সঞ্চয়") {
-        drawExpenseChartFromFirebase(currentUser.uid);
+        await drawExpenseChartFromFirebase(currentUser.uid);
       } else {
         drawTypeCategoryChart(selectedType, transactions, selectedCategory);
       }
@@ -373,45 +373,53 @@ function transactionFilter() {
         totalSaving += Number(data.amount) || 0;
       });
 
-      drawExpenseChart(totalSaving);
+      drawAnimatedSavingChart(totalSaving);
     } catch (error) {
       console.error("Error fetching data for expense chart:", error);
     }
   }
+  
+  let currentSaving = 0; // আগের সঞ্চয় ট্র্যাক করবে
 
-  function drawExpenseChart(savingAmount = 0) {
-  // সর্বোচ্চ সঞ্চয় সীমা 20000 টাকা ধরা হলো
-  const maxSaving = 20000;
-  const savingPercent = Math.min((savingAmount / maxSaving) * 100, 100); 
-  // 100% এর বেশি হলে 100% এ থামবে
+  function drawAnimatedSavingChart(targetSaving) {
+    const maxSaving = 20000;
+    const duration = 1000; // মোট সময় ১ সেকেন্ড
+    const frameRate = 60; // প্রতি সেকেন্ডে 60 ফ্রেম
+    const totalSteps = (duration / 1000) * frameRate;
+    const increment = (targetSaving - currentSaving) / totalSteps;
 
-  function getColor(amount) {
-    if (amount <= 100) return "#b71c1c";       
-    else if (amount <= 500) return "#D63029";  
-    else if (amount <= 1000) return "#f44336"; 
-    else if (amount <= 2000) return "#FA6E1B";  
-    else if (amount <= 3000) return "#ff9800"; 
-    else if (amount <= 4000) return "#E6BA1D"; 
-    else if (amount <= 5000) return "#DACB2B";  
-    else if (amount <= 6000) return "#cddc39";  
-    else if (amount <= 7000) return "#ADD13F"; 
-    else if (amount <= 9000) return "#9DCC42";  
-    else if (amount <= 11000) return "#8DC645";  
-    else if (amount <= 13000) return "#5EA23C"; 
-    else if (amount <= 15000) return "#469037";
-    else if (amount <= 18000) return "#3A8735"; 
-    else if (amount <= 20000) return "#348234";
-    else return "#2e7d32";                        
+    let step = 0;
+
+    const interval = setInterval(() => {
+      step++;
+      currentSaving += increment;
+
+      if (step >= totalSteps || currentSaving >= targetSaving) {
+        currentSaving = targetSaving;
+        clearInterval(interval);
+      }
+
+      updateSavingChart(currentSaving);
+    }, 1000 / frameRate);
   }
 
-  const color = getColor(savingAmount);
+  function updateSavingChart(savingAmount) {
+  const maxSaving = 10000;
+  const savingPercent = Math.min((savingAmount / maxSaving) * 100, 100);
+  const color = getColor(savingPercent); // percentage পাঠানো হচ্ছে
 
-  const options = {
+  function getColor(percent) {
+      percent = Math.max(0, Math.min(percent, 100));
+      const hue = (percent * 100) / 100;
+      return `hsl(${hue}, 80%, 40%)`;
+    }
+
+  const chartOptions = {
     chart: {
-      height: 300,
+      height: 400,
       type: "radialBar",
     },
-    series: [savingPercent],  // টাকা অনুযায়ী প্রগ্রেস
+    series: [savingPercent],
     labels: ["সঞ্চয়"],
     colors: [color],
     plotOptions: {
@@ -422,22 +430,25 @@ function transactionFilter() {
           size: "50%",
         },
         track: {
-          background:"rgba(0, 0, 0, 0.1)",
-          startAngle: -135,
-          endAngle: 135,
+          background: "rgba(0, 0, 0, 0.1)",
         },
         dataLabels: {
-          name: {
-            fontSize: "16px",
-            color: "white",
-            offsetY: 30,
-          },
           value: {
-            offsetY: -20,
-            fontSize: "22px",
+            show: true,
+            offsetY: -10,
+            fontSize: "24px",
             color: "white",
             formatter: function () {
               return toBanglaNumber(savingAmount.toFixed(0)) + " ৳";
+            },
+          },
+          name: {
+            show: true,
+            offsetY: 30,
+            fontSize: "18px",
+            color: "white",
+            formatter: function () {
+              return toBanglaNumber(savingPercent.toFixed(0)) + "%";
             },
           },
         },
@@ -451,10 +462,14 @@ function transactionFilter() {
     },
   };
 
-  expenseChart = new ApexCharts(document.getElementById("expenseChart"), options);
-  expenseChart.render();
+  if (expenseChart) {
+    expenseChart.updateOptions(chartOptions);
+  } else {
+    expenseChart = new ApexCharts(document.getElementById("expenseChart"), chartOptions);
+    expenseChart.render();
+  }
 }
-
+  
   function generateGreenShades(count) {
     const shades = [];
     const baseHue = 120;
@@ -496,7 +511,7 @@ function transactionFilter() {
     }
   });
 
-  document.getElementById("monthFilter").addEventListener("change", () => {
+document.getElementById("monthFilter").addEventListener("change", () => {
     const month = document.getElementById("monthFilter").value;
     const user = firebase.auth().currentUser;
     if (user && month) {
@@ -817,4 +832,5 @@ function drawFilterSummaryChart(title, income, expense) {
     plugins: [ChartDataLabels]
   });
 }
+  
 }
