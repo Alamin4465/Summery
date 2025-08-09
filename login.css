@@ -14,7 +14,7 @@ body {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: url('https://as1.ftcdn.net/jpg/06/86/04/24/1000_F_686042483_VZwkSaSfHCHCkO0cmX8Ggpr8e3S823za.webp') no-repeat center center fixed;
+  background-image: url('background.jpg');
   background-size: cover;
 }
 
