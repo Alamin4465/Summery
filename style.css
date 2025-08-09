@@ -12,7 +12,7 @@ body {
   line-height: 1.7;
   font-family: 'Segoe UI', sans-serif;
   display: flex;
-  background: url('https://as1.ftcdn.net/jpg/06/86/04/24/1000_F_686042483_VZwkSaSfHCHCkO0cmX8Ggpr8e3S823za.webp') no-repeat center center fixed;
+  background-image: url('background.jpg');
   background-size: cover;
   flex-direction: column;
   width: 800px;
