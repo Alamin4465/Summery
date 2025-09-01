@@ -12,7 +12,7 @@ body {
   line-height: 1.7;
   font-family: 'Segoe UI', sans-serif;
   display: flex;
-  background-image: url('background.jpg');
+  background: url('https://as1.ftcdn.net/jpg/06/86/04/24/1000_F_686042483_VZwkSaSfHCHCkO0cmX8Ggpr8e3S823za.webp') no-repeat center center fixed;
   background-size: cover;
   flex-direction: column;
   width: 800px;
@@ -697,4 +697,59 @@ h2 {
   margin: 0 auto;
   width: 100%;
   max-width: 400px;
+}
+
+.loan-summary {
+  margin-top: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.loan-summary h3 {
+  color: #1b2735;
+  font-weight: 700;
+  font-size: 22px;
+  margin-bottom: 15px;
+  border-left: 6px solid #f39c12;
+  padding-left: 10px;
+}
+
+
+.loan-summary table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 6px; /* ঘরের মধ্যে gap */
+}
+
+.loan-summary th {
+  color: #fff;
+  padding: 12px 15px;
+  border-radius: 6px;
+  text-align: center;
+  border: 4px solid rgba(255, 255, 255, 0.2); /* হালকা সাদা বর্ডার */
+
+}
+
+.loan-summary td {
+  padding: 12px 15px;
+  border: 4px solid rgba(255, 255, 255, 0.2); /* হালকা সাদা বর্ডার */
+  border-radius: 8px;
+  text-align: center;
+  border-radius: 6px;
+  color: #fff;
+  transition: 0.3s;
+}
+
+/* Alternate row colors */
+.loan-summary tbody tr:nth-child(even) td {
+  background-color: rgba(0, 128, 0, 0.3);
+  backdrop-filter: blur(10px);}
+
+.loan-summary tbody tr:nth-child(odd) td {
+  background-color: rgba(255, 0, 0, 0.3);
+  backdrop-filter: blur(10px);}
+
+.loan-summary tbody tr:hover td {
+  transform: scale(1.02);
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
 }
