@@ -1,8 +1,3 @@
-let currentFilter = "all";
-let allTransactions = [];
-let currentUser = null;
-let unsubscribeTransaction = null;
-
 // ========== AUTH CHECK ==========
 firebase.auth().onAuthStateChanged(user => {
   if (!user) {
