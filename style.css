@@ -300,8 +300,8 @@ canvas,
 }
 
 /* Edit/Delete বাটন */
-.editBtn,
-.deleteBtn {
+.edit_Btn,
+.delete_Btn {
   padding: 6px 10px;
   margin: 2px;
   font-size: 13px;
@@ -310,21 +310,21 @@ canvas,
   cursor: pointer;
 }
 
-.editBtn {
+.edit_Btn {
   background-color: #28a745;
   color: white;
 }
 
-.deleteBtn {
+.delete_Btn {
   background-color: #dc3545;
   color: white;
 }
 
-.editBtn:hover {
+.edit_Btn:hover {
   background-color: #218838;
 }
 
-.deleteBtn:hover {
+.delete_Btn:hover {
   background-color: #c82333;
 }
 
@@ -752,4 +752,118 @@ h2 {
   transform: scale(1.02);
   cursor: pointer;
   box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+.transaction-container {
+    display: flex;
+    gap: 20px; /* দুই কলামের মধ্যে ফাঁকা স্থান */
+  }
+
+  /* দুইটি কলাম সমান প্রস্থের */
+  .form-column {
+    flex: 1;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  }
+
+/* সাধারণ বাটন স্টাইল */
+#addCategoryBtn,
+#delCategoryBtn {
+    padding: 10px 20px;
+    margin: 5px;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+  background-color: rgba(0, 128, 0, 0.3);
+     color: #ffffff;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+ 		 width:150px;
+}
+
+/* হোভার এফেক্ট */
+#addCategoryBtn:hover {
+    background: rgba(76, 175, 80, 0.3); /* সবুজ হোভার */
+    color: #ffffff;
+    transform: translateY(-2px);
+}
+
+#delCategoryBtn:hover {
+    background: rgba(244, 67, 54, 0.3); /* লাল হোভার */
+    color: #ffffff;
+    transform: translateY(-2px);
+}
+
+/* অ্যাকটিভ ক্লিক এফেক্ট */
+#addCategoryBtn:active,
+#delCategoryBtn:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 15px rgba(0,0,0,0.2);
+}
+.edit-overlay-fixed {
+  position: fixed;
+  top: 50px; /* উপরের gap */
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 20px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 400px;
+  z-index: 9999;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  max-height: 80vh; /* বেশি হলে scroll হবে overlay-এ */
+  overflow-y: auto;
+}
+
+/* Overlay heading */
+.edit-overlay-fixed h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 18px;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* Inputs and selects */
+.edit-overlay-fixed input,
+.edit-overlay-fixed select {
+  width: 100%;
+  padding: 8px 10px;
+  margin-bottom: 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+/* Buttons */
+.edit-overlay-fixed button {
+  padding: 8px 15px;
+  margin-right: 10px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s;
+}
+
+.edit-overlay-fixed .save-btn {
+  background-color: #28a745;
+  color: white;
+}
+
+.edit-overlay-fixed .save-btn:hover {
+  background-color: #218838;
+}
+
+.edit-overlay-fixed .cancel-btn {
+  background-color: #dc3545;
+  color: white;
+}
+
+.edit-overlay-fixed .cancel-btn:hover {
+  background-color: #c82333;
 }
