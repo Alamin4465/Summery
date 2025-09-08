@@ -70,6 +70,7 @@ function loadTransactions() {
   // প্রথমবারে লোড
   fetchTransactionsRealtime();
 }
+
 let incomeExpenseChart = null;
 
 function renderIncomeExpenseCategoryChart(transactions, filter) {
@@ -78,7 +79,7 @@ function renderIncomeExpenseCategoryChart(transactions, filter) {
   // ক্যাটাগরি অনুযায়ী ডাটা গ্রুপিং
   transactions.forEach((t) => {
     const cat = t.category || "অন্যান্য";
-    const type = t.type || "expense"; 
+    const type = t.type || "expense";
     const amount = parseFloat(t.amount || 0);
 
     if (!categoryTotals[cat]) categoryTotals[cat] = { income: 0, expense: 0 };
@@ -145,7 +146,27 @@ function renderIncomeExpenseCategoryChart(transactions, filter) {
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.font = "bold 16px sans-serif";
-      ctx.fillText(toBanglaNumber(totalAmount)+"৳", left + width / 2, top + height / 2);
+      ctx.fillText(toBanglaNumber(totalAmount) + "৳", left + width / 2, top + height / 2);
+      ctx.restore();
+    }
+  };
+
+  // White legend plugin
+  const whiteLegendPlugin = {
+    id: 'whiteLegend',
+    afterDraw(chart) {
+      const legend = chart.legend;
+      if (!legend) return;
+      const ctx = chart.ctx;
+      ctx.save();
+      ctx.fillStyle = "#fff"; // সব টেক্সট সাদা
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+      legend.legendItems.forEach(item => {
+        const textX = item.left + 25; // icon + gap
+        const textY = item.top + item.height / 2;
+        ctx.fillText(item.text, textX, textY);
+      });
       ctx.restore();
     }
   };
@@ -159,40 +180,20 @@ function renderIncomeExpenseCategoryChart(transactions, filter) {
         backgroundColor: backgroundColors,
         borderColor: "transparent",
         borderWidth: 2,
+        hoverOffset: 30,
         cutout: "50%"
       }]
     },
     options: {
-      responsive: true,
       plugins: {
         legend: {
-  display: true,
-  position: "right",
-  labels: {
-    generateLabels: function(chart) {
-      const dataset = chart.data.datasets[0];
-      const sum = dataset.data.reduce((a, b) => a + b, 0);
-      return chart.data.labels.map((label, i) => {
-        const value = dataset.data[i];
-        const percentage = ((value / sum) * 100).toFixed(2) + "%";
-        return {
-          text: label + ": " + percentage,
-          fillStyle: dataset.backgroundColor[i],
-          strokeStyle: dataset.backgroundColor[i],
-          index: i,
-          font: {
-            size: 12,       // চাইলে বড় বা ছোট করতে পারেন
-            family: 'sans-serif',
-            weight: 'bold',
-            style: 'normal',
-            lineHeight: 1.2,
-            color: "#fff"   // এখানে সাদা ফন্ট explicitly
+          display: true,
+          position: "right",
+          labels: {
+            color: "#fff", // fallback, plugin থাকলেও
+            font: { size: 12, weight: "bold" },
           }
-        };
-      });
-    }
-  }
-},
+        },
         tooltip: {
           callbacks: {
             label: function(tooltipItem) {
@@ -204,7 +205,7 @@ function renderIncomeExpenseCategoryChart(transactions, filter) {
           }
         },
         datalabels: {
-          color: '#fff', // সেগমেন্টের % লেবেল সাদা
+          color: '#fff',
           display: true,
           formatter: (value, ctx) => {
             const sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
@@ -214,7 +215,7 @@ function renderIncomeExpenseCategoryChart(transactions, filter) {
         }
       }
     },
-    plugins: [centerTextPlugin, ChartDataLabels] // ChartDataLabels plugin যোগ করা
+    plugins: [centerTextPlugin, ChartDataLabels, whiteLegendPlugin]
   });
 }
 // ------------------ রিয়েলটাইম ট্রানজেকশন ------------------
