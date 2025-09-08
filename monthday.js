@@ -153,50 +153,63 @@ function transactionFilter() {
     if (monthFilter.value) filterByMonth(monthFilter.value);
   });
 
-  // ============== Type & Category Filter ==============
-  initTypeFilter();
+initTypeFilter();
 
-  function initTypeFilter() {
-    const typeSelector = document.getElementById("typeSelector");
-    const categorySelector = document.getElementById("categorySelector");
+function initTypeFilter() {
+  const typeSelector = document.getElementById("typeSelector");
+  const categorySelector = document.getElementById("categorySelector");
+  let unsubscribeCategories = null;
 
-    const incomeCategories = ["বেতন", "ব্যবসা", "অন্যান্য", "বাইক"];
-    const expenseCategories = [
-      "বাসা ভাড়া", "মোবাইল রিচার্জ", "বিদ্যুৎ বিল", "পরিবহন", "দোকান বিল",
-      "কেনাকাটা", "গাড়ির খরচ", "কাচা বাজার", "বাড়ি", "হাস্পাতাল",
-      "ব্যক্তিগত", "অন্যান্য", "গাড়ির তেল", "নাস্তা", "খাওয়া",
-      "চুলকাটানো", "লাইফ স্টাইল", "সঞ্চয়"
-    ];
+  // 🔹 Firestore থেকে ক্যাটাগরি লোড
+  function loadCategories(type) {
+    if (!type) return;
+    if (unsubscribeCategories) unsubscribeCategories();
 
-    function initCategories() {
-      const selectedType = typeSelector.value;
-      categorySelector.disabled = !selectedType;
-      categorySelector.innerHTML = selectedType
-        ? '<option value="">-- সব ক্যাটাগরি --</option>'
-        : '<option value="">প্রথমে টাইপ নির্বাচন করুন</option>';
+    unsubscribeCategories = db.collection("users").doc(currentUser.uid)
+      .collection("categories").where("type", "==", type)
+      .onSnapshot(snapshot => {
+        categorySelector.innerHTML = '<option value="">-- সব ক্যাটাগরি --</option>';
+        categorySelector.disabled = snapshot.empty;
 
-      if (selectedType) {
-        const categories = selectedType === "income" ? incomeCategories : expenseCategories;
-        categories.forEach(category => {
-          const option = document.createElement("option");
-          option.value = category;
-          option.textContent = category;
-          categorySelector.appendChild(option);
-        });
-      }
-    }
+        if (snapshot.empty) {
+          setStatus("এই টাইপে কোনো ক্যাটেগরি নেই");
+          return;
+        }
 
-    typeSelector.addEventListener("change", () => {
-      initCategories();
-      loadFilteredTransactionsAndDrawChart();
-    });
+        snapshot.docs
+          .sort((a, b) => a.data().name.localeCompare(b.data().name, "bn-BD"))
+          .forEach(doc => {
+            const opt = document.createElement("option");
+            opt.value = doc.data().name;
+            opt.textContent = doc.data().name;
+            opt.dataset.docId = doc.id;
+            categorySelector.appendChild(opt);
+          });
 
-    categorySelector.addEventListener("change", loadFilteredTransactionsAndDrawChart);
-
-    initCategories();
-    loadFilteredTransactionsAndDrawChart();
+        setStatus(`ক্যাটেগরি লোড হয়েছে (${snapshot.size})`);
+      }, err => setStatus("ক্যাটেগরি লোডে সমস্যা: " + err.message, true));
   }
 
+  // 🔹 টাইপ পরিবর্তন করলে
+  typeSelector.addEventListener("change", () => {
+    const selectedType = typeSelector.value;
+    if (selectedType) {
+      loadCategories(selectedType);
+    } else {
+      categorySelector.innerHTML = '<option value="">প্রথমে টাইপ নির্বাচন করুন</option>';
+      categorySelector.disabled = true;
+    }
+    loadFilteredTransactionsAndDrawChart();
+  });
+
+  // 🔹 ক্যাটাগরি পরিবর্তন হলে
+  categorySelector.addEventListener("change", loadFilteredTransactionsAndDrawChart);
+
+  // 🔹 শুরুতে
+  categorySelector.innerHTML = '<option value="">প্রথমে টাইপ নির্বাচন করুন</option>';
+  categorySelector.disabled = true;
+  loadFilteredTransactionsAndDrawChart();
+}
   // =====================
   // Load & Chart Section
   // =====================
