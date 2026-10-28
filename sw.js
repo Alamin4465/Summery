@@ -11,8 +11,7 @@ const ASSETS_TO_CACHE = [
   './proflie.js',
   './firebase-config.js',
   './manifest.json',
-  './icons/icon-192x192.png',
-  './icons/icon-512x512.png'
+  './Image.png'   // ⬅️ এখানে শুধু Image.png যোগ করা হলো
 ];
 
 // ফাইলগুলো ক্যাশে (মেমোরি) সেভ করা
@@ -26,11 +25,9 @@ self.addEventListener('install', (event) => {
 
 // ক্যাশে থেকে ফাইল লোড করা (দ্রুত পারফরম্যান্সের জন্য)
 self.addEventListener('fetch', (event) => {
-  // Firebase বা API রিকোয়েস্টগুলো ক্যাশে করবো না, সরাসরি নেটওয়ার্ক থেকে নিবে
   if (event.request.url.includes('firestore') || event.request.url.includes('googleapis')) {
     return;
   }
-  
   event.respondWith(
     caches.match(event.request).then((response) => {
       return response || fetch(event.request);
