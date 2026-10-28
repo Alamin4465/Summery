@@ -137,7 +137,7 @@ function showUserName(user) {
 
   function setName(name) {
     const finalName = (name && name.trim()) ? name.trim() : 'অতিথি';
-    userNameDiv.innerHTML = `<span style="font-size:0.85rem; opacity:0.85; font-weight:600;">ইউজার:</span> <strong style="font-size:1.1rem;">${finalName}</strong>`;
+    userNameDiv.innerHTML = `<span style="font-size:0.85rem; opacity:0.85; font-weight:600;"></span> <strong style="font-size:1.1rem;">${finalName}</strong>`;
   }
 
   if (user.displayName) {
