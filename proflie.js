@@ -1,65 +1,26 @@
-
 // 🔹 Profile Style
 const profileStyle = document.createElement('style');
 profileStyle.textContent = `
-.change-password-section {
-  margin-top: 30px; text-align: center;
-}
-.change-password-section input {
-  padding: 8px 12px; border-radius: 6px; border: 1px solid #ccc;
-  margin: 10px 0; font-size: 16px; width: 100%; max-width: 300px;
-}
-.change-password-section button {
-  padding: 8px 14px; border: none; border-radius: 6px;
-  background-color: #ffc107; color: #000; font-size: 16px; cursor: pointer;
-}
-.change-password-section button:hover {
-  background-color: #e0a800;
-}
-.profile-box {
-  max-width: 500px; margin: 30px auto; padding: 20px;
-  background-color: rgba(255, 255, 255, 0.2); border-radius: 12px;
-  backdrop-filter: blur(10px); box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  font-family: 'SolaimanLipi', sans-serif; color: #fff;
-}
-.profile-box h2 {
-  text-align: center; margin-bottom: 20px; font-size: 24px; font-weight: bold;
-}
-.profile-box .field-label {
-  font-weight: bold; margin-top: 15px; margin-bottom: 5px;
-}
-.profile-box .value {
-  padding: 8px 12px; background-color: rgba(255,255,255,0.1);
-  border-radius: 6px; margin-bottom: 10px;
-}
-.profile-box input, .profile-box select {
-  width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid #ccc;
-  margin-bottom: 15px; font-size: 16px; background-color: rgba(255,255,255,0.1); color: #fff;
-}
-.profile-box .buttons {
-  display: flex; justify-content: space-between; margin-top: 20px;
-}
-.profile-box button {
-  flex: 1; margin: 0 5px; padding: 10px 12px; border: none; border-radius: 6px;
-  background-color: #007bff; color: white; font-size: 16px; cursor: pointer;
-}
-.profile-box button:hover {
-  background-color: #0056b3;
-}
-#message {
-  margin-top: 15px; text-align: center; font-weight: bold;
-  font-size: 15px; color: lightgreen;
-}
-.logout-btn {
-  display: block; margin: 25px auto 0; padding: 10px 16px; background-color: #dc3545;
-  color: white; border: none; border-radius: 6px; font-size: 16px; cursor: pointer;
-}
+.change-password-section { margin-top: 30px; text-align: center; }
+.change-password-section input { padding: 8px 12px; border-radius: 6px; border: 1px solid #ccc; margin: 10px 0; font-size: 16px; width: 100%; max-width: 300px; }
+.change-password-section button { padding: 8px 14px; border: none; border-radius: 6px; background-color: #ffc107; color: #000; font-size: 16px; cursor: pointer; }
+.change-password-section button:hover { background-color: #e0a800; }
+.profile-box { max-width: 500px; margin: 30px auto; padding: 20px; background-color: rgba(255, 255, 255, 0.2); border-radius: 12px; backdrop-filter: blur(10px); box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); font-family: 'SolaimanLipi', sans-serif; color: #fff; }
+.profile-box h2 { text-align: center; margin-bottom: 20px; font-size: 24px; font-weight: bold; }
+.profile-box .field-label { font-weight: bold; margin-top: 15px; margin-bottom: 5px; }
+.profile-box .value { padding: 8px 12px; background-color: rgba(255,255,255,0.1); border-radius: 6px; margin-bottom: 10px; }
+.profile-box input, .profile-box select { width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid #ccc; margin-bottom: 15px; font-size: 16px; background-color: rgba(255,255,255,0.1); color: #fff; }
+.profile-box .buttons { display: flex; justify-content: space-between; margin-top: 20px; }
+.profile-box button { flex: 1; margin: 0 5px; padding: 10px 12px; border: none; border-radius: 6px; background-color: #007bff; color: white; font-size: 16px; cursor: pointer; }
+.profile-box button:hover { background-color: #0056b3; }
+#message { margin-top: 15px; text-align: center; font-weight: bold; font-size: 15px; color: lightgreen; }
+.logout-btn { display: block; margin: 25px auto 0; padding: 10px 16px; background-color: #dc3545; color: white; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; }
 .logout-btn:hover { background-color: #b02a37; }
 `;
 document.head.appendChild(profileStyle);
 
 // 🔹 Load Profile Info
-function loadProfileInfo() {
+async function loadProfileInfo() {
   const content = document.getElementById("content");
   content.innerHTML = `
     <div class="profile-box">
@@ -97,9 +58,9 @@ function loadProfileInfo() {
       <button id="logout-button" class="logout-btn">লগআউট</button>
 
       <div class="change-password-section">
-        <button id="togglePasswordFormBtn">🔐 পাসওয়ার্ড পরিবর্তন করুন</button>
+        <button id="togglePasswordFormBtn">🔐 পাসওয়ার্ড পরিবর্তন করুন</button>
         <div id="passwordForm" style="display: none;">
-          <input type="password" id="newPassword" placeholder="নতুন পাসওয়ার্ড দিন" />
+          <input type="password" id="newPassword" placeholder="নতুন পাসওয়ার্ড দিন" />
           <br />
           <button id="changePasswordBtn">আপডেট করুন</button>
           <div id="passwordMessage"></div>
@@ -109,72 +70,111 @@ function loadProfileInfo() {
   `;
 
   const user = firebase.auth().currentUser;
-  if (!user) return;
+  if (!user) {
+    document.getElementById("message").innerText = "লগইন পাওয়া যায়নি! আবার লগইন করুন।";
+    document.getElementById("message").style.color = "red";
+    return;
+  }
 
   const uid = user.uid;
-  firebase.firestore().collection("users").doc(uid).get().then(doc => {
-    if (doc.exists) {
-      const { name = "", email = user.email, gender = "", dob = "" } = doc.data();
+  const db = firebase.firestore();
 
-      document.getElementById("nameDisplay").innerText = name;
-      document.getElementById("emailDisplay").innerText = email;
-      document.getElementById("genderDisplay").innerText = gender;
-      document.getElementById("dobDisplay").innerText = dob;
+  try {
+    // ১. শুধুমাত্র আপনার বর্তমান UID দিয়ে ডাটা খোঁজা
+    const doc = await db.collection("users").doc(uid).get();
+    
+    if (doc.exists && doc.data().name) {
+      const data = doc.data();
+      document.getElementById("nameDisplay").innerText = data.name || "—";
+      document.getElementById("emailDisplay").innerText = data.email || user.email || "—";
+      document.getElementById("genderDisplay").innerText = data.gender || "—";
+      document.getElementById("dobDisplay").innerText = data.dob || "—";
 
-      document.getElementById("nameInput").value = name;
-      document.getElementById("genderInput").value = gender;
-      document.getElementById("dobInput").value = dob;
+      document.getElementById("nameInput").value = data.name || "";
+      document.getElementById("genderInput").value = data.gender || "";
+      document.getElementById("dobInput").value = data.dob || "";
+    } else {
+      // ২. ডাটা না থাকলে নতুন ডকুমেন্ট তৈরি
+      document.getElementById("nameDisplay").innerText = "—";
+      document.getElementById("emailDisplay").innerText = user.email || "—";
+      document.getElementById("genderDisplay").innerText = "—";
+      document.getElementById("dobDisplay").innerText = "—";
+      
+      await db.collection("users").doc(uid).set({
+        name: "",
+        email: user.email || "",
+        gender: "",
+        dob: "",
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+
+      document.getElementById("message").innerText = "নতুন প্রোফাইল তৈরি হয়েছে। এডিট করে তথ্য দিন।";
+      document.getElementById("message").style.color = "orange";
     }
-  });
+
+  } catch (error) {
+    console.error("Firebase Error:", error);
+    document.getElementById("nameDisplay").innerText = "—";
+    document.getElementById("emailDisplay").innerText = user.email || "—";
+    document.getElementById("genderDisplay").innerText = "—";
+    document.getElementById("dobDisplay").innerText = "—";
+    document.getElementById("message").innerText = "লোডে সমস্যা: " + error.message;
+    document.getElementById("message").style.color = "red";
+  }
 
   // Edit, Save, Cancel
   document.getElementById("editBtn").addEventListener("click", () => toggleEditMode(true));
   document.getElementById("cancelBtn").addEventListener("click", () => toggleEditMode(false));
-  document.getElementById("saveBtn").addEventListener("click", () => {
+  document.getElementById("saveBtn").addEventListener("click", async () => {
     const name = document.getElementById("nameInput").value.trim();
     const gender = document.getElementById("genderInput").value;
     const dob = document.getElementById("dobInput").value;
 
-    firebase.firestore().collection("users").doc(uid).update({ name, gender, dob })
-      .then(() => {
-        document.getElementById("message").innerText = "তথ্য সংরক্ষণ হয়েছে!";
-        toggleEditMode(false);
-        loadProfileInfo();
-      })
-      .catch(() => {
-        document.getElementById("message").innerText = "সংরক্ষণে সমস্যা হয়েছে!";
-      });
+    try {
+      await db.collection("users").doc(uid).update({ name, gender, dob });
+      document.getElementById("message").innerText = "তথ্য সংরক্ষণ হয়েছে!";
+      document.getElementById("message").style.color = "lightgreen";
+
+      const userNameDiv = document.getElementById("user-name");
+      if (userNameDiv && name) {
+        userNameDiv.innerHTML = `<span style="font-size:0.85rem; opacity:0.85; font-weight:600;">ইউজার:</span> <strong style="font-size:1.1rem;">${name}</strong>`;
+      }
+
+      toggleEditMode(false);
+      loadProfileInfo();
+    } catch (err) {
+      document.getElementById("message").innerText = "সংরক্ষণে সমস্যা: " + err.message;
+      document.getElementById("message").style.color = "red";
+    }
   });
 
   // Logout
   document.getElementById("logout-button").addEventListener("click", () => {
-    firebase.auth().signOut().then(() => {
-      window.location.href = "login.html";
-    });
+    firebase.auth().signOut().then(() => { window.location.href = "login.html"; });
   });
 
-  // Toggle Password Form
+  // Password Toggle
   document.getElementById("togglePasswordFormBtn").addEventListener("click", () => {
     const form = document.getElementById("passwordForm");
     form.style.display = form.style.display === "none" ? "block" : "none";
     document.getElementById("passwordMessage").innerText = "";
   });
 
-  // Change Password Logic
+  // Password Change
   document.getElementById("changePasswordBtn").addEventListener("click", () => {
     const newPassword = document.getElementById("newPassword").value.trim();
     const messageBox = document.getElementById("passwordMessage");
 
     if (newPassword.length < 6) {
       messageBox.style.color = "red";
-      messageBox.innerText = "পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে!";
+      messageBox.innerText = "পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে!";
       return;
     }
 
     firebase.auth().currentUser.updatePassword(newPassword)
       .then(() => {
         messageBox.style.color = "lightgreen";
-        messageBox.innerText = "পাসওয়ার্ড পরিবর্তন সফল হয়েছে!";
+        messageBox.innerText = "পাসওয়ার্ড পরিবর্তন সফল হয়েছে!";
         document.getElementById("newPassword").value = "";
       })
       .catch(error => {
@@ -182,7 +182,7 @@ function loadProfileInfo() {
         if (error.code === 'auth/requires-recent-login') {
           messageBox.innerText = "অনুগ্রহ করে আবার লগইন করে চেষ্টা করুন।";
         } else {
-          messageBox.innerText = "পাসওয়ার্ড পরিবর্তনে সমস্যা হয়েছে!";
+          messageBox.innerText = "সমস্যা হয়েছে! " + error.message;
         }
       });
   });
@@ -201,18 +201,3 @@ function toggleEditMode(enable) {
   document.getElementById("saveBtn").style.display = enable ? "inline-block" : "none";
   document.getElementById("cancelBtn").style.display = enable ? "inline-block" : "none";
 }
-
-document.addEventListener("DOMContentLoaded", () => {
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      transactionFilter();
-      renderForm();
-      loadDashboardSummary();
-      loadTransactions();
-    } else {
-      window.location.href = "login.html";
-    }
-  });
-});
-
-
