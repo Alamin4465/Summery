@@ -4,12 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>আয়-ব্যয় ব্যবস্থাপনা</title>
-  
+
   <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- Main CSS (ভার্সন নম্বর আপডেট করে দিয়েছি যাতে নতুন ডিজাইন লোড হয়) -->
-  <link rel="stylesheet" href="style.css?v=12.0" />
-  
+
+  <!-- Main CSS -->
+  <link rel="stylesheet" href="style.css?v=13.0" />
+
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
@@ -27,31 +28,38 @@
 </head>
 <body>
 
-  <!-- 📱 মোবাইলের জন্য টপবার (হ্যামবার্গার মেনু) -->
+  <!-- 📱 মোবাইলের জন্য টপবার -->
   <header class="mobile-topbar">
-    <button id="menu-toggle"><i class="fas fa-bars"></i></button>
-    <div class="mobile-title">Income Tracker</div>
+    <button id="menu-toggle" aria-label="মেনু">
+      <i class="fas fa-bars"></i>
+    </button>
+    <!-- ডানপাশের এই জায়গায় মেনু ক্লিক করলে নাম বদলাবে -->
+    <div class="mobile-title">লোড হচ্ছে...</div>
   </header>
 
-  <!-- 🟢 ওভারলে (মোবাইলে মেনু ওপেন হলে পেছনের অংশ ব্লার হবে) -->
+  <!-- 🟢 ওভারলে -->
   <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
 
-  <!-- 🔵 বাম দিকের সাইডবার (Desktop) / ড্রপডাউন (Mobile) -->
+  <!-- 🔵 সাইডবার -->
   <aside class="sidebar" id="sidebar">
-    
+
+    <!-- লোগো -->
     <div class="sidebar-header">
       <div class="logo-box">
-        <i class="fas fa-wallet" style="color: #3b82f6;"></i> <span>Expense Tracker</span>
+        <i class="fas fa-wallet" style="color: #3b82f6;"></i>
+        <span>Alamin Hosen</span>
       </div>
     </div>
 
-    <!-- ইউজার নেম ও সেভিং স্ট্যাটাস সাইডবারে থাকবে -->
-    <div id="user-name" title="প্রোফাইল দেখুন">ইউজার: লোড হচ্ছে...</div>
+    <!-- প্রোফাইল কার্ড (আইকন উপরে, নাম নিচে) -->
+    <div id="user-name" title="প্রোফাইল দেখুন"></div>
+
+    <!-- সেভিং স্ট্যাটাস -->
     <div id="today-saving-status"><span>লোড হচ্ছে...</span></div>
-    
+
     <button id="mark-saving-btn" style="display:none;">আজকের সঞ্চয় সম্পন্ন করলাম</button>
 
-    <!-- নেভিগেশন মেনু -->
+    <!-- নেভিগেশন -->
     <nav id="topbar">
       <div class="menu-row">
         <button class="menu-button active" id="nav-dashboard"><i class="fas fa-home"></i> ড্যাশবোর্ড</button>
@@ -62,12 +70,12 @@
     </nav>
   </aside>
 
-  <!-- ⚪ মেইন কনটেন্ট এরিয়া -->
+  <!-- ⚪ মেইন কনটেন্ট -->
   <main id="content">
     <p>লোড হচ্ছে...</p>
   </main>
 
-  <!-- আপনার সব জাভাস্ক্রিপ্ট ফাইল -->
+  <!-- সব JS ফাইল -->
   <script src="main.js"></script>
   <script src="monthday.js"></script>
   <script src="transactionfrom.js"></script>
@@ -75,13 +83,24 @@
   <script src="dashboard.js"></script>
   <script src="proflie.js"></script>
 
-  <!-- মোবাইল মেনু ওপেন/ক্লোজ করার জাভাস্ক্রিপ্ট -->
+  <!-- মোবাইল মেনু + ডাইনামিক টাইটেল + Auto User Name -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      const menuToggle = document.getElementById('menu-toggle');
-      const sidebar = document.getElementById('sidebar');
-      const backdrop = document.getElementById('sidebar-backdrop');
+      const menuToggle  = document.getElementById('menu-toggle');
+      const sidebar     = document.getElementById('sidebar');
+      const backdrop    = document.getElementById('sidebar-backdrop');
       const menuButtons = document.querySelectorAll('.menu-button');
+      const mobileTitle = document.querySelector('.mobile-title');
+      const content     = document.getElementById('content');
+      const userNameEl  = document.getElementById('user-name');
+
+      // মেনু আইডি → সেকশন টাইটেল
+      const sectionTitles = {
+        'nav-dashboard': 'ড্যাশবোর্ড',
+        'nav-forms':     'ফর্মস',
+        'nav-submit':    'ট্রানজেকশন',
+        'nav-filter':    'ফিল্টার'
+      };
 
       function toggleMenu() {
         sidebar.classList.toggle('active');
@@ -89,15 +108,69 @@
       }
 
       if (menuToggle) menuToggle.addEventListener('click', toggleMenu);
-      if (backdrop) backdrop.addEventListener('click', toggleMenu);
+      if (backdrop)   backdrop.addEventListener('click', toggleMenu);
 
-      // মোবাইলে কোনো মেনুতে ক্লিক করলে মেনু বন্ধ হয়ে যাবে
+      // 🔥 মেনুতে ক্লিক করলে টপবারের নাম পরিবর্তন হবে
       menuButtons.forEach(btn => {
         btn.addEventListener('click', () => {
-          if (window.innerWidth <= 768) {
-            toggleMenu();
+          if (mobileTitle && sectionTitles[btn.id]) {
+            mobileTitle.textContent = sectionTitles[btn.id];
           }
+          if (window.innerWidth <= 768) toggleMenu();
         });
+      });
+
+      // পেজের ভেতরের .titel থেকে টাইটেল sync (যেমন: "ফর্ম সেকশন")
+      if (content && mobileTitle) {
+        const syncTitle = () => {
+          const titleEl = content.querySelector('.titel');
+          if (titleEl) {
+            const text = titleEl.textContent.trim();
+            if (text) {
+              mobileTitle.textContent = text; 
+              document.title = text + ' | আয়-ব্যয় ব্যবস্থাপনা';
+            }
+          }
+        };
+
+        syncTitle();
+        new MutationObserver(syncTitle).observe(content, { childList: true, subtree: false });
+      }
+
+      // ============================================
+      // 🔥 Firebase থেকে অটোমেটিক ইউজারের নাম লোড
+      // (এটি শুরুতে টপবারে নামটি দেখাবে)
+      // ============================================
+      firebase.auth().onAuthStateChanged(async (user) => {
+        if (!user) return;
+
+        let displayName = user.displayName;
+
+        if (!displayName) {
+          try {
+            const doc = await firebase.firestore().collection('users').doc(user.uid).get();
+            if (doc.exists) {
+              const data = doc.data();
+              displayName = data.name || data.displayName || data.fullName || data.userName || '';
+            }
+          } catch (err) {}
+        }
+
+        if (!displayName && user.email) {
+          displayName = user.email.split('@')[0];
+        }
+
+        if (!displayName) displayName = 'ব্যবহারকারী';
+
+        // ১. মোবাইল টপবারে নাম বসানো (যদি পেজ লোড হওয়ার সময় খালি থাকে)
+        if (mobileTitle && (mobileTitle.textContent === 'লোড হচ্ছে...' || mobileTitle.textContent === '')) {
+          mobileTitle.textContent = displayName;
+        }
+
+        // ২. সাইডবারের প্রোফাইল কার্ডে নাম বসানো
+        if (userNameEl && !userNameEl.textContent.trim()) {
+          userNameEl.textContent = displayName;
+        }
       });
     });
   </script>
