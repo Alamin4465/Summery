@@ -193,34 +193,74 @@ a {
   overflow-wrap: anywhere;
 }
 
+/* ============================================
+   3.1 Profile Card — Avatar উপরে, নাম নিচে
+   ============================================ */
 #user-name {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   align-items: center;
+  justify-content: center;
+  text-align: center;
   gap: 10px;
 
   margin: 15px;
-  padding: 12px 15px;
+  padding: 18px 15px 16px;
 
   background: rgba(255, 255, 255, 0.5);
   border: 1px solid rgba(255, 255, 255, 0.6);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
 
   color: var(--primary-dark);
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 1.4;
   overflow-wrap: anywhere;
+  word-break: break-word;
+
   cursor: pointer;
+  min-height: 120px;
 
-  transition: background var(--transition);
+  transition:
+    background var(--transition),
+    box-shadow var(--transition),
+    transform var(--transition);
 }
 
-#user-name::after {
-  content: "›";
+/* Avatar circle with user icon */
+#user-name::before {
+  content: "\f007";                    /* fa-user */
+  font-family: "Font Awesome 6 Free";
+  font-weight: 900;
+  font-size: 1.7rem;
+  color: var(--primary);
+
+  width: 64px;
+  height: 64px;
   flex-shrink: 0;
-  font-size: 1.4rem;
-  line-height: 1;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(59, 130, 246, 0.12);
+  border: 2px solid rgba(59, 130, 246, 0.28);
+  border-radius: 50%;
+
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+
+  transition:
+    background var(--transition),
+    border-color var(--transition);
 }
 
+#user-name:active {
+  transform: scale(0.98);
+}
+
+/* ============================================
+   3.2 Today Saving Status
+   ============================================ */
 #today-saving-status {
   margin: 0 15px 15px;
   padding: 12px;
@@ -257,6 +297,9 @@ a {
   transition: background var(--transition);
 }
 
+/* ============================================
+   3.3 Navigation Menu
+   ============================================ */
 #topbar {
   padding: 0 10px 15px;
 }
@@ -480,7 +523,7 @@ a {
 }
 
 /* ============================================
-   8. Folder-Style Tabs (Improved)
+   8. Folder-Style Tabs
    ============================================ */
 .tabs {
   position: relative;
@@ -494,7 +537,6 @@ a {
   min-width: 0;
   margin-bottom: 0;
 
-  /* হালকা নিচের লাইন — inactive tab-এর নিচে দেখা যাবে */
   border-bottom: 1px solid rgba(255, 255, 255, 0.55);
 }
 
@@ -521,7 +563,7 @@ a {
 
   cursor: pointer;
   opacity: 0.85;
-  margin-bottom: -1px; /* content-এর সাথে মিশে যাবে */
+  margin-bottom: -1px;
 
   position: relative;
   z-index: 1;
@@ -539,11 +581,9 @@ a {
   font-weight: 700;
   opacity: 1;
 
-  /* content-এর border-color-এর সাথে ম্যাচ করানো হয়েছে */
   border-color: rgba(255, 255, 255, 0.55);
   box-shadow: 0 -2px 12px rgba(59, 130, 246, 0.12);
 
-  /* active tab সবসময় উপরে থাকবে */
   position: relative;
   z-index: 3;
 }
@@ -782,7 +822,7 @@ a {
 }
 
 /* ============================================
-   12. Tab Content & Filter Panel (Improved)
+   12. Tab Content & Filter Panel
    ============================================ */
 .tab-content {
   width: 100%;
@@ -790,11 +830,11 @@ a {
 
   padding: 20px;
   margin-bottom: 20px;
-  margin-top: -1px; /* tab-এর সাথে জোড়া লাগানোর জন্য */
+  margin-top: -1px;
 
   background: rgba(255, 255, 255, 0.4);
   border: 1px solid rgba(255, 255, 255, 0.55);
-  border-top: none; /* ⬅️ active tab-এর নিচে কোনো দাগ থাকবে না */
+  border-top: none;
   border-radius: 0 14px 14px 14px;
 
   box-shadow: var(--shadow-md);
@@ -1005,7 +1045,25 @@ a {
 }
 
 /* ============================================
-   17. Tables — Corrected Selectors
+   16.1 Chart Containers (for responsive charts)
+   ============================================ */
+.chart-container {
+  position: relative;
+  width: 100%;
+  max-width: 560px;
+  height: 340px;
+  margin: 20px auto 10px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* ============================================
+   17. Tables
    ============================================ */
 .transaction-table,
 #transactionTable,
@@ -1282,7 +1340,6 @@ a {
   background-color: var(--glass-bg);
 }
 
-/* Allow wrapping in text-heavy dashboard sections */
 #content > *,
 .form-column > *,
 .profile-box > *,
@@ -1296,6 +1353,12 @@ a {
 @media (hover: hover) and (pointer: fine) {
   #user-name:hover {
     background: rgba(255, 255, 255, 0.75);
+    box-shadow: var(--shadow-sm);
+  }
+
+  #user-name:hover::before {
+    background: rgba(59, 130, 246, 0.2);
+    border-color: rgba(59, 130, 246, 0.45);
   }
 
   #mark-saving-btn:hover,
@@ -1407,6 +1470,10 @@ button:active {
   .reset-group button {
     width: 100%;
   }
+
+  .chart-container {
+    height: 320px;
+  }
 }
 
 /* ============================================
@@ -1496,7 +1563,7 @@ button:active {
     visibility: visible;
   }
 
-  /* Backdrop is visible only when active */
+  /* Backdrop */
   .sidebar-backdrop {
     display: block;
 
@@ -1584,6 +1651,11 @@ button:active {
     padding: 12px;
   }
 
+  .chart-container {
+    height: 300px;
+    padding: 8px;
+  }
+
   /* Forms */
   .transaction-container {
     flex-direction: column;
@@ -1607,7 +1679,7 @@ button:active {
     padding: 15px;
   }
 
-  /* Tables: preserve actual table layout inside scroll containers */
+  /* Tables */
   .transaction-table,
   #transactionTable,
   #loanTable,
@@ -1643,7 +1715,6 @@ button:active {
     white-space: nowrap;
   }
 
-  /* Keep action buttons usable */
   .edit_Btn,
   .delete_Btn {
     min-height: 36px;
@@ -1810,6 +1881,11 @@ button:active {
     padding: 7px;
     font-size: 13px;
   }
+
+  .chart-container {
+    height: 260px;
+    padding: 6px;
+  }
 }
 
 /* ============================================
@@ -1875,10 +1951,7 @@ button:active {
 
 /* ============================================
    28. Wallet Summary — Full-Width Fix
-   Keep this section at the END of style.css
    ============================================ */
-
-/* The walletSummary element is a wrapper, not a table */
 #content {
   width: calc(100% - var(--sidebar-width));
   max-width: 100%;
@@ -1899,7 +1972,6 @@ button:active {
   -webkit-overflow-scrolling: touch;
 }
 
-/* Actual table inside the wallet summary wrapper */
 #walletSummary table.transaction-table {
   display: table !important;
   width: 100% !important;
@@ -1912,7 +1984,6 @@ button:active {
   box-sizing: border-box;
 }
 
-/* Wallet table cells */
 #walletSummary table.transaction-table th,
 #walletSummary table.transaction-table td {
   padding: 12px 15px;
@@ -1934,14 +2005,12 @@ button:active {
   text-align: right;
 }
 
-/* Keep wallet summary heading readable */
 #walletSummary h3 {
   width: 100%;
   margin: 0 0 12px;
   box-sizing: border-box;
 }
 
-/* Tablet and mobile */
 @media screen and (max-width: 768px) {
   #content {
     width: 100%;
@@ -1978,27 +2047,4 @@ button:active {
     padding: 9px 6px;
     font-size: 13px;
   }
-}
-
-/* Chart containers — proper responsive sizing */
-.chart-container {
-  position: relative;
-  width: 100%;
-  max-width: 560px;
-  height: 340px;
-  margin: 20px auto 10px;
-  padding: 10px;
-  background: rgba(255, 255, 255, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.55);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-
-@media (max-width: 768px) {
-  .chart-container { height: 300px; padding: 8px; }
-}
-@media (max-width: 480px) {
-  .chart-container { height: 260px; padding: 6px; }
 }
