@@ -3,47 +3,103 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>আয়-ব্যয় ব্যবস্থাপনা</title>
-				<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="style.css?v=1.0" />
+  <title>আয়-ব্যয় ব্যবস্থাপনা</title>
+  
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Main CSS (ভার্সন নম্বর আপডেট করে দিয়েছি যাতে নতুন ডিজাইন লোড হয়) -->
+  <link rel="stylesheet" href="style.css?v=12.0" />
+  
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
   <script src="firebase-config.js"></script>
 
-  <!-- Chart Libraries (optional) -->
+  <!-- Chart Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.4.0"></script>
-<script>
-  Chart.register(window['chartjs-plugin-annotation']); // ✅ অবশ্যই দরকার
-</script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.4.0"></script>
+  <script>
+    Chart.register(window['chartjs-plugin-annotation']);
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
 </head>
 <body>
-  <div id="user-name"></div>
- <div id="today-saving-status"><span>লোড হচ্ছে...</span></div>
-<button id="mark-saving-btn" style="display:none;">আজকের সঞ্চয় সম্পন্ন করলাম</button>
-  <nav id="topbar">
-    <div class="menu-row">
-      <button class="menu-button" id="nav-dashboard">ড্যাশবোর্ড 📊</button>
-      <button class="menu-button" id="nav-forms">ফর্মস 📄</button>
-      <button class="menu-button" id="nav-submit">ট্রানজেকশন 💳</button>
-      <button class="menu-button" id="nav-filter">ফিল্টার 🔍</button>
-      <button class="menu-button" id="nav-profile">প্রোফাইল 📍</button>
-    </div>
-  </nav>
 
+  <!-- 📱 মোবাইলের জন্য টপবার (হ্যামবার্গার মেনু) -->
+  <header class="mobile-topbar">
+    <button id="menu-toggle"><i class="fas fa-bars"></i></button>
+    <div class="mobile-title">Income Tracker</div>
+  </header>
+
+  <!-- 🟢 ওভারলে (মোবাইলে মেনু ওপেন হলে পেছনের অংশ ব্লার হবে) -->
+  <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+
+  <!-- 🔵 বাম দিকের সাইডবার (Desktop) / ড্রপডাউন (Mobile) -->
+  <aside class="sidebar" id="sidebar">
+    
+    <div class="sidebar-header">
+      <div class="logo-box">
+        <i class="fas fa-wallet" style="color: #3b82f6;"></i> <span>Expense Tracker</span>
+      </div>
+    </div>
+
+    <!-- ইউজার নেম ও সেভিং স্ট্যাটাস সাইডবারে থাকবে -->
+    <div id="user-name" title="প্রোফাইল দেখুন">ইউজার: লোড হচ্ছে...</div>
+    <div id="today-saving-status"><span>লোড হচ্ছে...</span></div>
+    
+    <button id="mark-saving-btn" style="display:none;">আজকের সঞ্চয় সম্পন্ন করলাম</button>
+
+    <!-- নেভিগেশন মেনু -->
+    <nav id="topbar">
+      <div class="menu-row">
+        <button class="menu-button active" id="nav-dashboard"><i class="fas fa-home"></i> ড্যাশবোর্ড</button>
+        <button class="menu-button" id="nav-forms"><i class="fas fa-file-alt"></i> ফর্মস</button>
+        <button class="menu-button" id="nav-submit"><i class="fas fa-credit-card"></i> ট্রানজেকশন</button>
+        <button class="menu-button" id="nav-filter"><i class="fas fa-search"></i> ফিল্টার</button>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- ⚪ মেইন কনটেন্ট এরিয়া -->
   <main id="content">
     <p>লোড হচ্ছে...</p>
   </main>
 
+  <!-- আপনার সব জাভাস্ক্রিপ্ট ফাইল -->
   <script src="main.js"></script>
   <script src="monthday.js"></script>
   <script src="transactionfrom.js"></script>
   <script src="from.js"></script>
   <script src="dashboard.js"></script>
   <script src="proflie.js"></script>
+
+  <!-- মোবাইল মেনু ওপেন/ক্লোজ করার জাভাস্ক্রিপ্ট -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const menuToggle = document.getElementById('menu-toggle');
+      const sidebar = document.getElementById('sidebar');
+      const backdrop = document.getElementById('sidebar-backdrop');
+      const menuButtons = document.querySelectorAll('.menu-button');
+
+      function toggleMenu() {
+        sidebar.classList.toggle('active');
+        backdrop.classList.toggle('active');
+      }
+
+      if (menuToggle) menuToggle.addEventListener('click', toggleMenu);
+      if (backdrop) backdrop.addEventListener('click', toggleMenu);
+
+      // মোবাইলে কোনো মেনুতে ক্লিক করলে মেনু বন্ধ হয়ে যাবে
+      menuButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (window.innerWidth <= 768) {
+            toggleMenu();
+          }
+        });
+      });
+    });
+  </script>
 </body>
 </html>
