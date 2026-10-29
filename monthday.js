@@ -1,5 +1,7 @@
 function transactionFilter() {
   const content = document.getElementById('content');
+  if (!content) return;
+
   content.innerHTML = `
    <h2 class="titel">লেনদেন ফিল্টার</h2>
 <div class="tabs">
@@ -27,8 +29,8 @@ function transactionFilter() {
       </div>
     </div>
 
-    <div class="monthdaytable">
-      <table id="filteredTable">
+    <div class="monthdaytable" style="overflow-x: auto; width: 100%;">
+      <table id="filteredTable" class="transaction-table">
         <thead>
           <tr>
             <th>তারিখ/মাস</th>
@@ -39,10 +41,10 @@ function transactionFilter() {
         </thead>
         <tbody></tbody>
       </table>
-      <table id="monthlySummary"></table>
+      <table id="monthlySummary" class="transaction-table"></table>
     </div>
 
-    <div class="chart-container">
+    <div class="chart-container" style="height: 350px; margin-top: 20px;">
       <canvas id="filterSummaryChart"></canvas>
     </div>
   </div>
@@ -65,8 +67,8 @@ function transactionFilter() {
       </select>
     </div>
 
-    <div class="table-section">
-      <table id="typeFilteredTable">
+    <div class="table-section" style="overflow-x: auto; width: 100%;">
+      <table id="typeFilteredTable" class="transaction-table">
         <thead>
           <tr>
             <th>তারিখ</th>
@@ -82,24 +84,16 @@ function transactionFilter() {
       </table>
     </div>
 
-    <div class="chart-container">
+    <div class="chart-container" style="height: 350px; margin-top: 20px;">
       <canvas id="typeCategoryChart"></canvas>
     </div>
 
-    <div id="expenseChart" style="width:100%; max-width:400px; height:400px; display:none; margin: 0 auto;"></div>
+    <div id="expenseChart" style="width:100%; max-width:400px; height:400px; display:none; margin: 20px auto 0;"></div>
   </div>
 </div>
 `;
 
-  // ========================
-  // Firebase DB & Auth Setup
-  // ========================
   const db = firebase.firestore();
-  let currentUser = null;
-
-  firebase.auth().onAuthStateChanged((user) => {
-    if (user) currentUser = user;
-  });
 
   let filterSummaryChart = null;
   let typeCategoryChart = null;
@@ -107,7 +101,9 @@ function transactionFilter() {
 
   // ============== Utility ==============
   function formatTaka(amount) {
-    return Number(amount).toLocaleString("bn-BD", {
+    const num = Number(amount);
+    if (!Number.isFinite(num)) return "৳০";
+    return num.toLocaleString("bn-BD", {
       style: "currency",
       currency: "BDT",
       minimumFractionDigits: 0
@@ -116,21 +112,30 @@ function transactionFilter() {
 
   function toBanglaNumber(num) {
     const bnNums = ['০','১','২','৩','৪','৫','৬','৭','৮','৯'];
+    if (num === null || num === undefined) return '০';
     return String(num).replace(/[0-9]/g, d => bnNums[d]);
   }
 
   function formatBanglaPercent(value) {
     const banglaDigits = ['০','১','২','৩','৪','৫','৬','৭','৮','৯'];
-    let str = value.toFixed(1) + '%';
+    const num = Number(value);
+    if (!Number.isFinite(num)) return '০%';
+    let str = num.toFixed(1) + '%';
     return str.replace(/\d/g, d => banglaDigits[d]);
+  }
+
+  // 🆕 transfer বাদ দেওয়ার হেল্পার
+  function isTransfer(data) {
+    return data.type === "transfer" || data.category === "ওয়ালেট ট্রান্সফার";
   }
 
   // ============== Tabs ==============
   window.showTab = function (event, tabId) {
     document.querySelectorAll('.tab-content').forEach(tab => tab.style.display = 'none');
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    document.getElementById(tabId).style.display = 'block';
-    if (event) event.currentTarget.classList.add('active');
+    const target = document.getElementById(tabId);
+    if (target) target.style.display = 'block';
+    if (event && event.currentTarget) event.currentTarget.classList.add('active');
   };
 
   // ============== Date & Month Filter ==============
@@ -140,19 +145,26 @@ function transactionFilter() {
   const filteredTable = document.querySelector("#filteredTable tbody");
   const summaryEl = document.getElementById("monthlySummary");
 
-  resetBtn.addEventListener("click", () => {
-    dateFilter.value = "";
-    monthFilter.value = "";
-    filteredTable.innerHTML = "<tr><td colspan='4' class='message'>ফিল্টার প্রয়োগ করুন</td></tr>";
-    summaryEl.style.display = "none";
+  resetBtn?.addEventListener("click", () => {
+    if (dateFilter) dateFilter.value = "";
+    if (monthFilter) monthFilter.value = "";
+    if (filteredTable) filteredTable.innerHTML = "<tr><td colspan='4' class='message'>ফিল্টার প্রয়োগ করুন</td></tr>";
+    if (summaryEl) {
+      summaryEl.innerHTML = '';
+      summaryEl.style.display = "none";
+    }
     if (filterSummaryChart) {
-      filterSummaryChart.destroy();
+      try { filterSummaryChart.destroy(); } catch (e) {}
       filterSummaryChart = null;
+    }
+    if (summaryChart) {
+      try { summaryChart.destroy(); } catch (e) {}
+      summaryChart = null;
     }
   });
 
-  dateFilter.addEventListener("change", () => {
-    monthFilter.value = "";
+  dateFilter?.addEventListener("change", () => {
+    if (monthFilter) monthFilter.value = "";
     const date = dateFilter.value;
     const user = firebase.auth().currentUser;
     if (user && date) {
@@ -161,8 +173,8 @@ function transactionFilter() {
     }
   });
 
-  monthFilter.addEventListener("change", () => {
-    dateFilter.value = "";
+  monthFilter?.addEventListener("change", () => {
+    if (dateFilter) dateFilter.value = "";
     const month = monthFilter.value;
     const user = firebase.auth().currentUser;
     if (user && month) {
@@ -176,6 +188,8 @@ function transactionFilter() {
   function initTypeFilter() {
     const typeSelector = document.getElementById("typeSelector");
     const categorySelector = document.getElementById("categorySelector");
+    if (!typeSelector || !categorySelector) return;
+
     let unsubscribeCategories = null;
 
     function setStatus(msg, isError = false) {
@@ -185,6 +199,11 @@ function transactionFilter() {
     function loadCategories(type) {
       if (!type) return;
       if (unsubscribeCategories) unsubscribeCategories();
+
+      if (!currentUser) {
+        setStatus("লগইন নেই", true);
+        return;
+      }
 
       unsubscribeCategories = db.collection("users").doc(currentUser.uid)
         .collection("categories").where("type", "==", type)
@@ -198,7 +217,7 @@ function transactionFilter() {
           }
 
           snapshot.docs
-            .sort((a, b) => a.data().name.localeCompare(b.data().name, "bn-BD"))
+            .sort((a, b) => (a.data().name || '').localeCompare(b.data().name || '', "bn-BD"))
             .forEach(doc => {
               const opt = document.createElement("option");
               opt.value = doc.data().name;
@@ -207,8 +226,8 @@ function transactionFilter() {
               categorySelector.appendChild(opt);
             });
 
-          setStatus(`ক্যাটেগরি লোড হয়েছে (${snapshot.size})`);
-        }, err => setStatus("ক্যাটেগরি লোডে সমস্যা: " + err.message, true));
+          setStatus(`ক্যাটাগরি লোড হয়েছে (${snapshot.size})`);
+        }, err => setStatus("ক্যাটাগরি লোডে সমস্যা: " + err.message, true));
     }
 
     typeSelector.addEventListener("change", () => {
@@ -233,6 +252,7 @@ function transactionFilter() {
     const typeSelector = document.getElementById("typeSelector");
     const categorySelector = document.getElementById("categorySelector");
     const tbody = document.querySelector("#typeFilteredTable tbody");
+    if (!typeSelector || !categorySelector || !tbody) return;
 
     const selectedType = typeSelector.value;
     const selectedCategory = categorySelector.value;
@@ -262,8 +282,14 @@ function transactionFilter() {
 
       const snapshot = await query.get();
       const transactions = snapshot.docs
-        .map(doc => doc.data())
-        .sort((a, b) => b.timestamp - a.timestamp);
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .filter(tx => !isTransfer(tx))  // 🆕 transfer বাদ
+        .sort((a, b) => {
+          const aT = a.timestamp?.seconds || 0;
+          const bT = b.timestamp?.seconds || 0;
+          if (aT && bT) return bT - aT;
+          return String(b.date || '').localeCompare(String(a.date || ''));
+        });
 
       tbody.innerHTML = "";
 
@@ -275,7 +301,7 @@ function transactionFilter() {
 
       let totalAmount = 0;
       transactions.forEach(tx => {
-        totalAmount += Number(tx.amount);
+        totalAmount += Number(tx.amount) || 0;
         const tr = document.createElement("tr");
         tr.classList.add(tx.type === "income" ? "income-row" : "expense-row");
         tr.innerHTML = `
@@ -307,20 +333,25 @@ function transactionFilter() {
     }
   }
 
-  // ============== Type Category Pie Chart (Improved) ==============
   function drawTypeCategoryChart(type, transactions, selectedCategory = '') {
-    document.getElementById("expenseChart").style.display = "none";
-    document.getElementById("typeCategoryChart").style.display = "block";
+    const expenseChartDiv = document.getElementById("expenseChart");
+    const typeChartCanvas = document.getElementById("typeCategoryChart");
+    if (!typeChartCanvas) return;
 
-    const canvas = document.getElementById("typeCategoryChart");
-    const ctx = canvas.getContext("2d");
+    if (expenseChartDiv) expenseChartDiv.style.display = "none";
+    typeChartCanvas.style.display = "block";
 
-    if (typeCategoryChart) typeCategoryChart.destroy();
+    const ctx = typeChartCanvas.getContext("2d");
+
+    if (typeCategoryChart) {
+      try { typeCategoryChart.destroy(); } catch (e) {}
+      typeCategoryChart = null;
+    }
 
     const categoryTotals = {};
     transactions.forEach(tx => {
       if (!categoryTotals[tx.category]) categoryTotals[tx.category] = 0;
-      categoryTotals[tx.category] += Number(tx.amount);
+      categoryTotals[tx.category] += Number(tx.amount) || 0;
     });
 
     let labels = Object.keys(categoryTotals);
@@ -332,17 +363,23 @@ function transactionFilter() {
     }
 
     const totalSum = data.reduce((a, b) => a + b, 0);
-    let colors = type === "income"
+    const hasData = labels.length > 0 && totalSum > 0;
+
+    const colors = type === "income"
       ? generateGreenShades(labels.length)
       : generateRedShades(labels.length);
+
+    const safeLabels = hasData ? labels : ['কোনো ডাটা নেই'];
+    const safeData = hasData ? data : [1];
+    const safeColors = hasData ? colors : ['#9ca3af'];
 
     typeCategoryChart = new Chart(ctx, {
       type: 'pie',
       data: {
-        labels: labels,
+        labels: safeLabels,
         datasets: [{
-          data: data,
-          backgroundColor: colors,
+          data: safeData,
+          backgroundColor: safeColors,
           borderWidth: 2,
           borderColor: '#fff'
         }]
@@ -354,6 +391,7 @@ function transactionFilter() {
         animation: { duration: 1000, easing: 'easeOutQuart' },
         plugins: {
           legend: {
+            display: hasData,
             position: window.innerWidth < 480 ? "bottom" : "right",
             labels: {
               color: '#374151',
@@ -364,6 +402,7 @@ function transactionFilter() {
           },
           datalabels: {
             color: "#fff",
+            display: hasData,
             font: { weight: 'bold', size: 13 },
             formatter: (value) => {
               if (totalSum === 0) return '০%';
@@ -372,10 +411,11 @@ function transactionFilter() {
             }
           },
           tooltip: {
+            enabled: hasData,
             callbacks: {
               label: function (context) {
                 const label = context.label || '';
-                const value = context.parsed;
+                const value = Number(context.parsed) || 0;
                 const total = context.dataset.data.reduce((a, b) => a + b, 0);
                 const percentage = total === 0 ? 0 : ((value / total) * 100).toFixed(1);
                 return `${label}: ${formatTaka(value)} (${percentage}%)`;
@@ -384,9 +424,9 @@ function transactionFilter() {
           },
           title: {
             display: true,
-            text: type === "income"
-              ? "আয়ের ক্যাটাগরি পাই চার্ট"
-              : "ব্যয়ের ক্যাটাগরি পাই চার্ট",
+            text: hasData
+              ? (type === "income" ? "আয়ের ক্যাটাগরি পাই চার্ট" : "ব্যয়ের ক্যাটাগরি পাই চার্ট")
+              : "কোনো ডাটা নেই",
             font: { size: 16, weight: 'bold' },
             color: "#374151",
             padding: { bottom: 10 }
@@ -397,13 +437,18 @@ function transactionFilter() {
     });
   }
 
-  // ============== Saving Radial Chart ==============
   async function drawExpenseChartFromFirebase(userId) {
-    document.getElementById("typeCategoryChart").style.display = "none";
+    const typeChartCanvas = document.getElementById("typeCategoryChart");
     const expenseDiv = document.getElementById("expenseChart");
+    if (!expenseDiv) return;
+
+    if (typeChartCanvas) typeChartCanvas.style.display = "none";
     expenseDiv.style.display = "block";
 
-    if (expenseChart) expenseChart.destroy();
+    if (expenseChart) {
+      try { expenseChart.destroy(); } catch (e) {}
+      expenseChart = null;
+    }
 
     try {
       let totalSaving = 0;
@@ -415,6 +460,7 @@ function transactionFilter() {
 
       snapshot.forEach(doc => {
         const data = doc.data();
+        if (isTransfer(data)) return;  // 🆕
         totalSaving += Number(data.amount) || 0;
       });
 
@@ -427,18 +473,26 @@ function transactionFilter() {
   let currentSaving = 0;
 
   function drawAnimatedSavingChart(targetSaving) {
+    if (!Number.isFinite(targetSaving) || targetSaving <= 0) {
+      currentSaving = 0;
+      updateSavingChart(0);
+      return;
+    }
+
     const duration = 1000;
     const frameRate = 60;
-    const totalSteps = (duration / 1000) * frameRate;
-    const increment = (targetSaving - currentSaving) / totalSteps;
+    const totalSteps = Math.max(1, (duration / 1000) * frameRate);
+    const startValue = currentSaving;
+    const diff = targetSaving - startValue;
+    const increment = diff / totalSteps;
 
     let step = 0;
 
     const interval = setInterval(() => {
       step++;
-      currentSaving += increment;
+      currentSaving = startValue + increment * step;
 
-      if (step >= totalSteps || currentSaving >= targetSaving) {
+      if (step >= totalSteps || (diff > 0 && currentSaving >= targetSaving) || (diff < 0 && currentSaving <= targetSaving)) {
         currentSaving = targetSaving;
         clearInterval(interval);
       }
@@ -449,12 +503,15 @@ function transactionFilter() {
 
   function updateSavingChart(savingAmount) {
     const maxSaving = 10000;
-    const savingPercent = Math.min((savingAmount / maxSaving) * 100, 100);
+    const safeAmount = Number(savingAmount) || 0;
+    const savingPercent = Math.min((safeAmount / maxSaving) * 100, 100);
     const color = getColor(savingPercent);
 
     function getColor(percent) {
-      percent = Math.max(0, Math.min(percent, 100));
-      const hue = (percent * 100) / 100;
+      const p = Number(percent);
+      if (!Number.isFinite(p)) return 'hsl(0, 80%, 40%)';
+      const safe = Math.max(0, Math.min(p, 100));
+      const hue = (safe * 100) / 100;
       return `hsl(${hue}, 80%, 40%)`;
     }
 
@@ -476,7 +533,7 @@ function transactionFilter() {
               fontSize: "24px",
               color: "#374151",
               formatter: function () {
-                return toBanglaNumber(savingAmount.toFixed(0)) + " ৳";
+                return toBanglaNumber(safeAmount.toFixed(0)) + " ৳";
               },
             },
             name: {
@@ -495,10 +552,13 @@ function transactionFilter() {
       stroke: { lineCap: "round" },
     };
 
+    const expenseDiv = document.getElementById("expenseChart");
+    if (!expenseDiv) return;
+
     if (expenseChart) {
       expenseChart.updateOptions(chartOptions);
     } else {
-      expenseChart = new ApexCharts(document.getElementById("expenseChart"), chartOptions);
+      expenseChart = new ApexCharts(expenseDiv, chartOptions);
       expenseChart.render();
     }
   }
@@ -531,7 +591,7 @@ function transactionFilter() {
 
   function clearChart() {
     if (typeCategoryChart) {
-      typeCategoryChart.destroy();
+      try { typeCategoryChart.destroy(); } catch (e) {}
       typeCategoryChart = null;
     }
   }
@@ -539,6 +599,7 @@ function transactionFilter() {
   // ============== Table Filters ==============
   function filterByDate(userId, date) {
     const tbody = document.querySelector("#filteredTable tbody");
+    if (!tbody) return;
     tbody.innerHTML = "";
 
     db.collection("users").doc(userId)
@@ -546,12 +607,13 @@ function transactionFilter() {
       .where("date", "==", date)
       .get()
       .then(snapshot => {
-        if (snapshot.empty) {
-          tbody.innerHTML = "<tr><td colspan='4' class='message'>এই তারিখে কোনো লেনদেন নেই</td></tr>";
-          return;
-        }
+        let hasRow = false;
+
         snapshot.forEach(doc => {
           const data = doc.data();
+          if (isTransfer(data)) return;  // 🆕 transfer বাদ
+
+          hasRow = true;
           const income = data.type === "income" ? formatTaka(data.amount) : "";
           const expense = data.type === "expense" ? formatTaka(data.amount) : "";
 
@@ -570,31 +632,54 @@ function transactionFilter() {
           `;
           tbody.appendChild(row);
         });
+
+        if (!hasRow) {
+          tbody.innerHTML = "<tr><td colspan='4' class='message'>এই তারিখে কোনো লেনদেন নেই</td></tr>";
+        }
+      })
+      .catch(err => {
+        console.error("filterByDate error:", err);
+        tbody.innerHTML = "<tr><td colspan='4' class='message'>লোডে সমস্যা</td></tr>";
       });
   }
 
   function filterByMonth(userId, month) {
     const tbody = document.querySelector("#filteredTable tbody");
+    if (!tbody) return;
     tbody.innerHTML = "";
 
-    const [year, mon] = month.split("-");
-    const start = new Date(`${year}-${mon}-01`);
-    const end = new Date(start);
-    end.setMonth(end.getMonth() + 1);
+    const monthPrefix = month;
+    const nextMonth = (() => {
+      const [y, m] = month.split("-").map(Number);
+      if (!y || !m) return null;
+      const next = new Date(y, m, 1);
+      const ny = next.getFullYear();
+      const nm = String(next.getMonth() + 1).padStart(2, '0');
+      return `${ny}-${nm}`;
+    })();
+
+    if (!nextMonth) {
+      tbody.innerHTML = "<tr><td colspan='4' class='message'>ভুল মাস ফরম্যাট</td></tr>";
+      return;
+    }
 
     db.collection("users").doc(userId)
       .collection("transactions")
-      .where("timestamp", ">=", start)
-      .where("timestamp", "<", end)
-      .orderBy("timestamp", "asc")
+      .where("date", ">=", monthPrefix + "-01")
+      .where("date", "<", nextMonth + "-01")
       .get()
       .then(snapshot => {
-        if (snapshot.empty) {
+        const sorted = snapshot.docs
+          .map(doc => ({ id: doc.id, ...doc.data() }))
+          .filter(d => !isTransfer(d))  // 🆕 transfer বাদ
+          .sort((a, b) => String(a.date || '').localeCompare(String(b.date || '')));
+
+        if (sorted.length === 0) {
           tbody.innerHTML = "<tr><td colspan='4' class='message'>এই মাসে কোনো লেনদেন নেই</td></tr>";
           return;
         }
-        snapshot.forEach(doc => {
-          const data = doc.data();
+
+        sorted.forEach(data => {
           const income = data.type === "income" ? formatTaka(data.amount) : "";
           const expense = data.type === "expense" ? formatTaka(data.amount) : "";
 
@@ -613,42 +698,51 @@ function transactionFilter() {
           `;
           tbody.appendChild(row);
         });
+      })
+      .catch(err => {
+        console.error("filterByMonth error:", err);
+        tbody.innerHTML = "<tr><td colspan='4' class='message'>লোডে সমস্যা</td></tr>";
       });
   }
 
-  // ============== Daily Summary ==============
   function calculateDailySummary(userId, date) {
-    const selectedDate = new Date(date);
-    selectedDate.setHours(0, 0, 0, 0);
-    const nextDay = new Date(selectedDate);
-    nextDay.setDate(nextDay.getDate() + 1);
-
-    let income = 0, expense = 0, prevBalance = 0;
     const ref = db.collection("users").doc(userId).collection("transactions");
 
-    ref.where("timestamp", "<", selectedDate).get().then(snapshot => {
-      snapshot.forEach(doc => {
+    Promise.all([
+      ref.where("date", "<", date).get(),
+      ref.where("date", "==", date).get()
+    ]).then(([prevSnap, todaySnap]) => {
+      let income = 0, expense = 0, prevBalance = 0;
+
+      prevSnap.forEach(doc => {
         const d = doc.data();
-        if (d.type === "income") prevBalance += d.amount || 0;
-        else if (d.type === "expense") prevBalance -= d.amount || 0;
+        if (isTransfer(d)) return;  // 🆕
+        const amt = Number(d.amount) || 0;
+        if (d.type === "income") prevBalance += amt;
+        else if (d.type === "expense") prevBalance -= amt;
       });
-      return ref.where("timestamp", ">=", selectedDate).where("timestamp", "<", nextDay).get();
-    }).then(snapshot => {
-      snapshot.forEach(doc => {
+
+      todaySnap.forEach(doc => {
         const d = doc.data();
-        if (d.type === "income") income += d.amount || 0;
-        else if (d.type === "expense") expense += d.amount || 0;
+        if (isTransfer(d)) return;  // 🆕
+        const amt = Number(d.amount) || 0;
+        if (d.type === "income") income += amt;
+        else if (d.type === "expense") expense += amt;
       });
 
       const daytotal = income - expense;
       const total = prevBalance + income - expense;
-      const dateLabel = new Date(date).toLocaleDateString("bn-BD", {
-        year: "numeric",
-        month: "short",
-        day: "numeric"
-      });
+      const dateLabel = (() => {
+        try {
+          return new Date(date).toLocaleDateString("bn-BD", {
+            year: "numeric", month: "short", day: "numeric"
+          });
+        } catch (e) { return date; }
+      })();
 
       const summaryTable = document.getElementById("monthlySummary");
+      if (!summaryTable) return;
+
       summaryTable.innerHTML = `
         <thead>
           <tr>
@@ -685,41 +779,60 @@ function transactionFilter() {
       `;
       summaryTable.style.display = "table";
       drawFilterSummaryChart(`${dateLabel} — আয় / ব্যয় / নিট`, income, expense);
+    }).catch(err => {
+      console.error("calculateDailySummary error:", err);
     });
   }
 
-  // ============== Monthly Summary ==============
   function calculateMonthlySummary(userId, month) {
-    const [year, mon] = month.split("-");
-    const start = new Date(`${year}-${mon}-01`);
-    const end = new Date(start);
-    end.setMonth(end.getMonth() + 1);
+    const [year, mon] = month.split("-").map(Number);
+    if (!year || !mon) return;
 
-    let income = 0, expense = 0, prevBalance = 0;
+    const monthPrefix = month;
+    const nextMonth = (() => {
+      const next = new Date(year, mon, 1);
+      const ny = next.getFullYear();
+      const nm = String(next.getMonth() + 1).padStart(2, '0');
+      return `${ny}-${nm}`;
+    })();
+
     const ref = db.collection("users").doc(userId).collection("transactions");
 
-    ref.where("timestamp", "<", start).get().then(snapshot => {
-      snapshot.forEach(doc => {
+    Promise.all([
+      ref.where("date", "<", monthPrefix + "-01").get(),
+      ref.where("date", ">=", monthPrefix + "-01").where("date", "<", nextMonth + "-01").get()
+    ]).then(([prevSnap, monthSnap]) => {
+      let income = 0, expense = 0, prevBalance = 0;
+
+      prevSnap.forEach(doc => {
         const d = doc.data();
-        if (d.type === "income") prevBalance += d.amount || 0;
-        else if (d.type === "expense") prevBalance -= d.amount || 0;
+        if (isTransfer(d)) return;  // 🆕
+        const amt = Number(d.amount) || 0;
+        if (d.type === "income") prevBalance += amt;
+        else if (d.type === "expense") prevBalance -= amt;
       });
-      return ref.where("timestamp", ">=", start).where("timestamp", "<", end).get();
-    }).then(snapshot => {
-      snapshot.forEach(doc => {
+
+      monthSnap.forEach(doc => {
         const d = doc.data();
-        if (d.type === "income") income += d.amount || 0;
-        else if (d.type === "expense") expense += d.amount || 0;
+        if (isTransfer(d)) return;  // 🆕
+        const amt = Number(d.amount) || 0;
+        if (d.type === "income") income += amt;
+        else if (d.type === "expense") expense += amt;
       });
 
       const monthtotal = income - expense;
       const total = prevBalance + income - expense;
-      const monthLabel = start.toLocaleString("bn-BD", {
-        year: 'numeric',
-        month: 'long'
-      });
+      const monthLabel = (() => {
+        try {
+          return new Date(year, mon - 1, 1).toLocaleString("bn-BD", {
+            year: 'numeric', month: 'long'
+          });
+        } catch (e) { return month; }
+      })();
 
       const summaryTable = document.getElementById("monthlySummary");
+      if (!summaryTable) return;
+
       summaryTable.innerHTML = `
         <thead>
           <tr>
@@ -756,19 +869,22 @@ function transactionFilter() {
       `;
       summaryTable.style.display = "table";
       drawFilterSummaryChart(`${monthLabel} — আয় / ব্যয় / নিট`, income, expense);
+    }).catch(err => {
+      console.error("calculateMonthlySummary error:", err);
     });
   }
 
-  // ============== Filter Summary Bar Chart (Fixed) ==============
   let summaryChart = null;
 
   function drawFilterSummaryChart(title, income, expense) {
     const total = income - expense;
     const canvas = document.getElementById("filterSummaryChart");
+    if (!canvas) return;
+
     const ctx = canvas.getContext("2d");
 
     if (summaryChart) {
-      summaryChart.destroy();
+      try { summaryChart.destroy(); } catch (e) {}
       summaryChart = null;
     }
 
@@ -807,7 +923,7 @@ function transactionFilter() {
           tooltip: {
             callbacks: {
               label: (ctx) => {
-                const v = ctx.raw;
+                const v = Number(ctx.raw) || 0;
                 const sign = v < 0 ? "−" : "";
                 return `${ctx.label}: ${sign}৳${Math.abs(v).toLocaleString("bn-BD")}`;
               }
@@ -820,8 +936,9 @@ function transactionFilter() {
             align: (ctx) => ctx.dataset.data[ctx.dataIndex] < 0 ? "bottom" : "top",
             offset: 6,
             formatter: (value) => {
-              const sign = value < 0 ? "−" : "";
-              return sign + "৳" + Math.abs(value).toLocaleString("bn-BD");
+              const v = Number(value) || 0;
+              const sign = v < 0 ? "−" : "";
+              return sign + "৳" + Math.abs(v).toLocaleString("bn-BD");
             }
           }
         },
@@ -832,8 +949,9 @@ function transactionFilter() {
             ticks: {
               color: "#4b5563",
               callback: (v) => {
-                const sign = v < 0 ? "−" : "";
-                return sign + "৳" + Math.abs(v).toLocaleString("bn-BD");
+                const n = Number(v) || 0;
+                const sign = n < 0 ? "−" : "";
+                return sign + "৳" + Math.abs(n).toLocaleString("bn-BD");
               }
             }
           },
