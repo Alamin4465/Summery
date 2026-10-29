@@ -3,22 +3,23 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="আয়-ব্যয় ব্যবস্থাপনা ও সঞ্চয় ট্র্যাকার" />
   <title>আয়-ব্যয় ব্যবস্থাপনা</title>
 
   <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
   <!-- Main CSS -->
-  <link rel="stylesheet" href="style.css?v=13.0" />
-<!-- PWA Manifest -->
-<link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="style.css?v=15.0" />
 
-<!-- Mobile Web App Capability -->
-<meta name="theme-color" content="#3b82f6" />
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="আয়-ব্যয়">
-  
+  <!-- PWA Manifest & Mobile Settings -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#3b82f6" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="আয়-ব্যয়">
+  <link rel="apple-touch-icon" href="Image.png">
+
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
@@ -29,10 +30,30 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.4.0"></script>
-  <script>
-    Chart.register(window['chartjs-plugin-annotation']);
-  </script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+
+  <!-- Chart plugin registration (safe guards) -->
+  <script>
+    // Chart.js must be loaded before registering plugins
+    if (typeof Chart !== 'undefined') {
+      // Annotation plugin (optional — may fail silently if not loaded)
+      if (window['chartjs-plugin-annotation']) {
+        try {
+          Chart.register(window['chartjs-plugin-annotation']);
+        } catch (e) {
+          console.warn('chartjs-plugin-annotation register failed:', e);
+        }
+      }
+      // DataLabels — register globally so per-chart `plugins: [ChartDataLabels]` is optional
+      if (window.ChartDataLabels) {
+        try {
+          Chart.register(window.ChartDataLabels);
+        } catch (e) {
+          console.warn('ChartDataLabels register failed:', e);
+        }
+      }
+    }
+  </script>
 </head>
 <body>
 
@@ -41,7 +62,7 @@
     <button id="menu-toggle" aria-label="মেনু">
       <i class="fas fa-bars"></i>
     </button>
-    <!-- ডানপাশের এই জায়গায় মেনু ক্লিক করলে নাম বদলাবে -->
+    <!-- অটোমেটিক ইউজারের নাম এখানে আসবে -->
     <div class="mobile-title">লোড হচ্ছে...</div>
   </header>
 
@@ -59,8 +80,26 @@
       </div>
     </div>
 
+    <!-- 🆕 থিম টগল বাটন (প্রোফাইলের ঠিক উপরে) -->
+    <div class="theme-toggle-wrapper">
+      <span id="theme-label">ডিফল্ট থিম</span>
+      <label class="switch">
+        <input type="checkbox" id="theme-toggle" aria-label="থিম পরিবর্তন">
+        <span class="slider round"></span>
+      </label>
+    </div>
+
     <!-- প্রোফাইল কার্ড (আইকন উপরে, নাম নিচে) -->
     <div id="user-name" title="প্রোফাইল দেখুন"></div>
+
+    <!-- 🆕 সেভিংস অন/অফ টগল বাটন -->
+    <div class="savings-toggle-wrapper">
+      <span>সেভিংস চালু</span>
+      <label class="switch">
+        <input type="checkbox" id="savings-toggle" checked aria-label="সেভিংস চালু বা বন্ধ">
+        <span class="slider round"></span>
+      </label>
+    </div>
 
     <!-- সেভিং স্ট্যাটাস -->
     <div id="today-saving-status"><span>লোড হচ্ছে...</span></div>
@@ -74,6 +113,8 @@
         <button class="menu-button" id="nav-forms"><i class="fas fa-file-alt"></i> ফর্মস</button>
         <button class="menu-button" id="nav-submit"><i class="fas fa-credit-card"></i> ট্রানজেকশন</button>
         <button class="menu-button" id="nav-filter"><i class="fas fa-search"></i> ফিল্টার</button>
+        <!-- 🆕 সেটিংস বাটন -->
+        <button class="menu-button" id="nav-settings"><i class="fas fa-cog"></i> সেটিংস</button>
       </div>
     </nav>
   </aside>
@@ -83,7 +124,7 @@
     <p>লোড হচ্ছে...</p>
   </main>
 
-  <!-- সব JS ফাইল -->
+  <!-- সব JS ফাইল (order important) -->
   <script src="main.js"></script>
   <script src="monthday.js"></script>
   <script src="transactionfrom.js"></script>
@@ -91,7 +132,7 @@
   <script src="dashboard.js"></script>
   <script src="proflie.js"></script>
 
-  <!-- মোবাইল মেনু + ডাইনামিক টাইটেল + Auto User Name -->
+  <!-- মোবাইল মেনু + Auto User Name + Theme Init -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const menuToggle  = document.getElementById('menu-toggle');
@@ -102,23 +143,26 @@
       const content     = document.getElementById('content');
       const userNameEl  = document.getElementById('user-name');
 
-      // মেনু আইডি → সেকশন টাইটেল
+      const APP_NAME = 'আয়-ব্যয় ব্যবস্থাপনা';
+
+      // মেনু আইডি → সেকশন টাইটেল (সঠিক বানান — 'ফর্মস')
       const sectionTitles = {
         'nav-dashboard': 'ড্যাশবোর্ড',
         'nav-forms':     'ফর্মস',
         'nav-submit':    'ট্রানজেকশন',
-        'nav-filter':    'ফিল্টার'
+        'nav-filter':    'ফিল্টার',
+        'nav-settings':  'সেটিংস'
       };
 
       function toggleMenu() {
-        sidebar.classList.toggle('active');
-        backdrop.classList.toggle('active');
+        if (sidebar)   sidebar.classList.toggle('active');
+        if (backdrop)  backdrop.classList.toggle('active');
       }
 
       if (menuToggle) menuToggle.addEventListener('click', toggleMenu);
       if (backdrop)   backdrop.addEventListener('click', toggleMenu);
 
-      // 🔥 মেনুতে ক্লিক করলে টপবারের নাম পরিবর্তন হবে
+      // মেনু ক্লিকে টাইটেল আপডেট (মোবাইলের জন্য)
       menuButtons.forEach(btn => {
         btn.addEventListener('click', () => {
           if (mobileTitle && sectionTitles[btn.id]) {
@@ -128,60 +172,100 @@
         });
       });
 
-      // পেজের ভেতরের .titel থেকে টাইটেল sync (যেমন: "ফর্ম সেকশন")
+      // পেজের ভেতরের .titel থেকে টাইটেল sync
       if (content && mobileTitle) {
         const syncTitle = () => {
           const titleEl = content.querySelector('.titel');
           if (titleEl) {
             const text = titleEl.textContent.trim();
-            if (text) {
-              mobileTitle.textContent = text; 
-              document.title = text + ' | আয়-ব্যয় ব্যবস্থাপনা';
-            }
+            if (text) mobileTitle.textContent = text;
           }
         };
-
         syncTitle();
-        new MutationObserver(syncTitle).observe(content, { childList: true, subtree: false });
+        try {
+          new MutationObserver(syncTitle).observe(content, { childList: true, subtree: false });
+        } catch (e) {
+          console.warn('MutationObserver failed:', e);
+        }
       }
 
       // ============================================
       // 🔥 Firebase থেকে অটোমেটিক ইউজারের নাম লোড
-      // (এটি শুরুতে টপবারে নামটি দেখাবে)
       // ============================================
-      firebase.auth().onAuthStateChanged(async (user) => {
-        if (!user) return;
+      if (typeof firebase !== 'undefined' && firebase.auth) {
+        firebase.auth().onAuthStateChanged(async (user) => {
+          if (!user) return;
 
-        let displayName = user.displayName;
+          let displayName = user.displayName;
 
-        if (!displayName) {
-          try {
-            const doc = await firebase.firestore().collection('users').doc(user.uid).get();
-            if (doc.exists) {
-              const data = doc.data();
-              displayName = data.name || data.displayName || data.fullName || data.userName || '';
+          if (!displayName) {
+            try {
+              const doc = await firebase.firestore().collection('users').doc(user.uid).get();
+              if (doc.exists) {
+                const data = doc.data() || {};
+                displayName = data.name || data.displayName || data.fullName || data.userName || '';
+              }
+            } catch (err) {
+              console.warn('Profile name load failed:', err);
             }
-          } catch (err) {}
+          }
+
+          if (!displayName && user.email) {
+            displayName = user.email.split('@')[0];
+          }
+
+          if (!displayName) displayName = 'ব্যবহারকারী';
+
+          // মোবাইল টপবারে নাম বসানো (শুধু placeholder থাকলে)
+          if (mobileTitle &&
+              (mobileTitle.textContent === 'লোড হচ্ছে...' || mobileTitle.textContent === '')) {
+            mobileTitle.textContent = displayName;
+          }
+
+          // প্রোফাইল কার্ডে নাম বসানো (যদি অন্য JS না ভরে)
+          if (userNameEl && !userNameEl.textContent.trim()) {
+            userNameEl.textContent = displayName;
+          }
+        });
+      }
+
+      // ============================================
+      // 🆕 থিম (Theme) লজিক
+      // ============================================
+      const themeToggle = document.getElementById('theme-toggle');
+      const themeLabel  = document.getElementById('theme-label');
+
+      if (themeToggle && document.body) {
+        // লোকাল স্টোরেজ থেকে সেভ করা থিম লোড
+        let savedTheme = 'default';
+        try {
+          savedTheme = localStorage.getItem('appTheme') || 'default';
+        } catch (e) { /* localStorage blocked */ }
+
+        if (savedTheme === 'dark') {
+          document.body.classList.add('dark-theme');
+          themeToggle.checked = true;
+          if (themeLabel) themeLabel.textContent = 'ডার্ক থিম';
         }
 
-        if (!displayName && user.email) {
-          displayName = user.email.split('@')[0];
-        }
-
-        if (!displayName) displayName = 'ব্যবহারকারী';
-
-        // ১. মোবাইল টপবারে নাম বসানো (যদি পেজ লোড হওয়ার সময় খালি থাকে)
-        if (mobileTitle && (mobileTitle.textContent === 'লোড হচ্ছে...' || mobileTitle.textContent === '')) {
-          mobileTitle.textContent = displayName;
-        }
-
-        // ২. সাইডবারের প্রোফাইল কার্ডে নাম বসানো
-        if (userNameEl && !userNameEl.textContent.trim()) {
-          userNameEl.textContent = displayName;
-        }
-      });
+        // টগল পরিবর্তন ইভেন্ট
+        themeToggle.addEventListener('change', (e) => {
+          if (e.target.checked) {
+            document.body.classList.add('dark-theme');
+            try { localStorage.setItem('appTheme', 'dark'); } catch (err) {}
+            if (themeLabel) themeLabel.textContent = 'ডার্ক থিম';
+          } else {
+            document.body.classList.remove('dark-theme');
+            try { localStorage.setItem('appTheme', 'default'); } catch (err) {}
+            if (themeLabel) themeLabel.textContent = 'ডিফল্ট থিম';
+          }
+        });
+      }
     });
+  </script>
 
+  <!-- PWA Service Worker Registration -->
+  <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js')
