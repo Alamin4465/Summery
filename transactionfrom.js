@@ -53,7 +53,7 @@ function loadTransactions() {
     </div>
     <div id="summary" style="margin-top: 20px; font-weight: bold;"></div>
 
-    <div class="chart-container" style="max-width: 450px; height: 350px;">
+    <div class="chart-container" style="max-width: 450px; height: 350px; margin: 20px auto; background: var(--glass-bg); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid var(--glass-border); border-radius: 14px; padding: 15px;">
       <canvas id="incomeExpenseChart"></canvas>
     </div>
   `;
@@ -183,16 +183,23 @@ function renderWalletSummary() {
   `;
 }
 
+// ------------------ 🆕 নতুন চার্ট কোড (Glass + 2D Pie) ------------------
 let incomeExpenseChart = null;
 
 function renderIncomeExpenseCategoryChart(transactions, filter) {
   const canvas = document.getElementById("incomeExpenseChart");
   if (!canvas) return;
 
-  const categoryTotals = {};
+  const ctx = canvas.getContext("2d");
 
+  if (incomeExpenseChart) {
+    try { incomeExpenseChart.destroy(); } catch (e) {}
+    incomeExpenseChart = null;
+  }
+
+  const categoryTotals = {};
   (transactions || []).forEach((t) => {
-    if (isTransferTx(t)) return;  // 🆕 transfer বাদ
+    if (isTransferTx(t)) return; // transfer বাদ
 
     const cat = t.category || "অন্যান্য";
     const type = t.type || "expense";
@@ -204,154 +211,115 @@ function renderIncomeExpenseCategoryChart(transactions, filter) {
 
   let labels = [];
   let data = [];
-  let backgroundColors = [];
+  let colors = [];
 
-  const greenShades = [
-    "rgba(0, 128, 0, 0.8)",
-    "rgba(34, 139, 34, 0.8)",
-    "rgba(50, 205, 50, 0.8)",
-    "rgba(144, 238, 144, 0.8)",
-    "rgba(0, 100, 0, 0.8)"
-  ];
-  const redShades = [
-    "rgba(255, 0, 0, 0.8)",
-    "rgba(178, 34, 34, 0.8)",
-    "rgba(255, 99, 71, 0.8)",
-    "rgba(220, 20, 60, 0.8)",
-    "rgba(139, 0, 0, 0.8)"
-  ];
+  // গ্লাস ইফেক্টের জন্য ৮৫% অপাসিটি (স্বচ্ছ) রঙ
+  const greenColors = ["rgba(0, 128, 0, 0.85)", "rgba(34, 139, 34, 0.85)", "rgba(50, 205, 50, 0.85)", "rgba(0, 100, 0, 0.85)", "rgba(144, 238, 144, 0.85)"]; 
+  const redColors = ["rgba(255, 0, 0, 0.85)", "rgba(220, 20, 60, 0.85)", "rgba(178, 34, 34, 0.85)", "rgba(139, 0, 0, 0.85)", "rgba(255, 99, 71, 0.85)"];
 
   if (filter === "income") {
     labels = Object.keys(categoryTotals).filter(c => categoryTotals[c].income > 0);
     data = labels.map(cat => categoryTotals[cat].income);
-    backgroundColors = labels.map((_, i) => greenShades[i % greenShades.length]);
+    colors = labels.map((_, i) => greenColors[i % greenColors.length]);
   } else if (filter === "expense") {
     labels = Object.keys(categoryTotals).filter(c => categoryTotals[c].expense > 0);
     data = labels.map(cat => categoryTotals[cat].expense);
-    backgroundColors = labels.map((_, i) => redShades[i % redShades.length]);
+    colors = labels.map((_, i) => redColors[i % redColors.length]);
   } else {
-    labels = [];
-    data = [];
-    backgroundColors = [];
     Object.keys(categoryTotals).forEach((cat, i) => {
       if (categoryTotals[cat].income > 0) {
         labels.push(cat + " (আয়)");
         data.push(categoryTotals[cat].income);
-        backgroundColors.push(greenShades[i % greenShades.length]);
+        colors.push(greenColors[i % greenColors.length]);
       }
       if (categoryTotals[cat].expense > 0) {
         labels.push(cat + " (ব্যয়)");
         data.push(categoryTotals[cat].expense);
-        backgroundColors.push(redShades[i % redShades.length]);
+        colors.push(redColors[i % redColors.length]);
       }
     });
   }
 
-  const totalAmount = data.reduce((a, b) => a + b, 0);
-  const hasData = data.length > 0 && totalAmount > 0;
+  const totalSum = data.reduce((a, b) => a + b, 0);
+  const hasData = data.length > 0 && totalSum > 0;
 
-  const ctx = canvas.getContext("2d");
-  if (incomeExpenseChart) {
-    try { incomeExpenseChart.destroy(); } catch (e) {}
-    incomeExpenseChart = null;
+  function formatBanglaPercent(value) {
+    const banglaDigits = ['০','১','২','৩','৪','৫','৬','৭','৮','৯'];
+    const num = Number(value);
+    if (!Number.isFinite(num)) return '০%';
+    let str = num.toFixed(1) + '%';
+    return str.replace(/\d/g, d => banglaDigits[d]);
   }
 
   const safeLabels = hasData ? labels : ['কোনো ডাটা নেই'];
   const safeData = hasData ? data : [1];
-  const safeColors = hasData ? backgroundColors : ['#9ca3af'];
-
-  const textColor = (function () {
-    try {
-      return getComputedStyle(document.body).getPropertyValue('--text-primary').trim() || "#111";
-    } catch (e) {
-      return "#111";
-    }
-  })();
-
-  const centerTextPlugin = {
-    id: 'centerText',
-    afterDraw(chart) {
-      if (!hasData) return;
-
-      const meta = chart._metasets && chart._metasets[0];
-      const firstArc = meta && meta.data && meta.data[0];
-      const outerRadius = firstArc && firstArc.outerRadius;
-      if (!outerRadius || outerRadius <= 0) return;
-
-      const { width, height, ctx } = chart;
-      const centerX = width / 2;
-      const centerY = height / 2;
-
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, outerRadius * 0.5, 0, 2 * Math.PI);
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
-      ctx.fill();
-      ctx.closePath();
-      ctx.restore();
-
-      ctx.save();
-      ctx.fillStyle = textColor;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.font = "bold 16px sans-serif";
-      ctx.fillText(toBanglaNumber(totalAmount) + "৳", centerX, centerY);
-      ctx.restore();
-    }
-  };
+  const safeColors = hasData ? colors : ['rgba(156, 163, 175, 0.85)'];
 
   incomeExpenseChart = new Chart(ctx, {
-    type: "doughnut",
+    type: 'pie', // ছবির মতো ২ডি পাই চার্ট
     data: {
       labels: safeLabels,
       datasets: [{
         data: safeData,
         backgroundColor: safeColors,
-        borderColor: "transparent",
         borderWidth: 2,
-        hoverOffset: hasData ? 30 : 0,
-        cutout: "50%"
+        borderColor: 'rgba(0, 0, 0, 0.7)' // ছবির মতো কালো বর্ডার
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      animation: { duration: 1000, easing: 'easeOutQuart' },
       plugins: {
         legend: {
           display: hasData,
-          position: "right",
+          position: window.innerWidth < 480 ? "bottom" : "right",
           labels: {
-            color: textColor,
-            font: { size: 12, weight: "bold" }
+            color: '#374151',
+            font: { size: 13, weight: 'bold' },
+            padding: 12,
+            boxWidth: 14
           }
         },
         tooltip: {
           enabled: hasData,
           callbacks: {
-            label: function (tooltipItem) {
-              const value = Number(tooltipItem.raw) || 0;
-              const sum = safeData.reduce((a, b) => a + b, 0);
-              const percentage = sum > 0 ? ((value / sum) * 100).toFixed(2) : '০.০০';
-              return `${tooltipItem.label}: ${toBanglaNumber(value)} (${percentage}%)`;
+            label: function (context) {
+              const label = context.label || '';
+              const value = Number(context.parsed) || 0;
+              const percentage = totalSum === 0 ? 0 : ((value / totalSum) * 100).toFixed(1);
+              return `${label}: ${toBanglaNumber(value)} ৳ (${formatBanglaPercent(percentage)})`;
             }
           }
         },
+        // পাই-এর ভেতরে টেক্সট দেখানোর সেটিংস
         datalabels: {
-          color: '#fff',
-          display: hasData,
+          color: '#fff', 
+          textStrokeColor: 'rgba(0, 0, 0, 0.8)',
+          textStrokeWidth: 2,
+          font: { weight: 'bold', size: 12 },
           formatter: (value, ctx) => {
-            const sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
-            if (sum === 0) return '০%';
-            const percentage = ((value / sum) * 100).toFixed(2);
-            return percentage + "%";
+            if (totalSum === 0) return '';
+            const percentage = (value / totalSum) * 100;
+            if (percentage < 5) return formatBanglaPercent(percentage);
+            const label = ctx.chart.data.labels[ctx.dataIndex];
+            return `${label}\n${formatBanglaPercent(percentage)}`;
+          },
+          anchor: 'center',
+          align: 'center',
+          display: (ctx) => {
+            const value = ctx.dataset.data[ctx.dataIndex];
+            const percentage = (value / totalSum) * 100;
+            return percentage > 5; // ৫% এর বেশি হলেই ভেতরে টেক্সট দেখাবে
           }
         }
       }
     },
-    plugins: [centerTextPlugin, ChartDataLabels]
+    plugins: [ChartDataLabels]
   });
 }
 
+// ------------------ বাকি কোড ------------------
 function fetchTransactionsRealtime() {
   if (!currentUser) return;
   if (unsubscribeTransaction) unsubscribeTransaction();
@@ -467,7 +435,6 @@ async function showFixedOverlay(id) {
     return alert("ডাটা লোডে সমস্যা: " + err.message);
   }
 
-  // 🆕 transfer হলে এডিট করা যাবে না
   if (isTransferTx(data)) {
     return alert("ওয়ালেট ট্রান্সফার এন্ট্রি এখান থেকে এডিট করা যাবে না।");
   }
