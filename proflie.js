@@ -1,4 +1,6 @@
-// 🔹 Profile Style
+// ============================================
+// Profile Section Styles
+// ============================================
 const profileStyle = document.createElement('style');
 profileStyle.textContent = `
 .change-password-section { margin-top: 30px; text-align: center; }
@@ -19,9 +21,28 @@ profileStyle.textContent = `
 `;
 document.head.appendChild(profileStyle);
 
-// 🔹 Load Profile Info
+// ============================================
+// Utility helpers (local scope)
+// ============================================
+function toBanglaNumber(number) {
+  if (typeof number !== "number") number = parseFloat(number);
+  if (!Number.isFinite(number)) return '০';
+  return number.toLocaleString('bn-BD', { maximumFractionDigits: 2 });
+}
+
+function convertToBanglaDigits(input) {
+  const banglaDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+  if (input === null || input === undefined) return '';
+  return String(input).replace(/\d/g, d => banglaDigits[d]);
+}
+
+// ============================================
+// Load Profile Info
+// ============================================
 async function loadProfileInfo() {
   const content = document.getElementById("content");
+  if (!content) return;
+
   content.innerHTML = `
     <div class="profile-box">
       <h2>প্রোফাইল তথ্য</h2>
@@ -70,36 +91,51 @@ async function loadProfileInfo() {
   `;
 
   const user = firebase.auth().currentUser;
+  const messageEl = document.getElementById("message");
+
   if (!user) {
-    document.getElementById("message").innerText = "লগইন পাওয়া যায়নি! আবার লগইন করুন।";
-    document.getElementById("message").style.color = "red";
+    if (messageEl) {
+      messageEl.innerText = "লগইন পাওয়া যায়নি! আবার লগইন করুন।";
+      messageEl.style.color = "red";
+    }
     return;
   }
 
   const uid = user.uid;
   const db = firebase.firestore();
+  const nameDisplay = document.getElementById("nameDisplay");
+  const emailDisplay = document.getElementById("emailDisplay");
+  const genderDisplay = document.getElementById("genderDisplay");
+  const dobDisplay = document.getElementById("dobDisplay");
+
+  // 🆕 Form elements references
+  const nameInput = document.getElementById("nameInput");
+  const genderInput = document.getElementById("genderInput");
+  const dobInput = document.getElementById("dobInput");
 
   try {
-    // ১. শুধুমাত্র আপনার বর্তমান UID দিয়ে ডাটা খোঁজা
+    // ১. শুধুমাত্র আপনার বর্তমান UID দিয়ে ডাটা খোঁজা
     const doc = await db.collection("users").doc(uid).get();
-    
-    if (doc.exists && doc.data().name) {
-      const data = doc.data();
-      document.getElementById("nameDisplay").innerText = data.name || "—";
-      document.getElementById("emailDisplay").innerText = data.email || user.email || "—";
-      document.getElementById("genderDisplay").innerText = data.gender || "—";
-      document.getElementById("dobDisplay").innerText = data.dob || "—";
 
-      document.getElementById("nameInput").value = data.name || "";
-      document.getElementById("genderInput").value = data.gender || "";
-      document.getElementById("dobInput").value = data.dob || "";
+    if (doc.exists && doc.data() && doc.data().name) {
+      const data = doc.data();
+      if (nameDisplay)  nameDisplay.innerText  = data.name || "—";
+      if (emailDisplay) emailDisplay.innerText = data.email || user.email || "—";
+      if (genderDisplay) genderDisplay.innerText = data.gender || "—";
+      if (dobDisplay)   dobDisplay.innerText   = data.dob
+        ? convertToBanglaDigits(data.dob)
+        : "—";
+
+      if (nameInput)   nameInput.value   = data.name || "";
+      if (genderInput) genderInput.value = data.gender || "";
+      if (dobInput)    dobInput.value    = data.dob || "";
     } else {
       // ২. ডাটা না থাকলে নতুন ডকুমেন্ট তৈরি
-      document.getElementById("nameDisplay").innerText = "—";
-      document.getElementById("emailDisplay").innerText = user.email || "—";
-      document.getElementById("genderDisplay").innerText = "—";
-      document.getElementById("dobDisplay").innerText = "—";
-      
+      if (nameDisplay)   nameDisplay.innerText   = "—";
+      if (emailDisplay)  emailDisplay.innerText  = user.email || "—";
+      if (genderDisplay) genderDisplay.innerText = "—";
+      if (dobDisplay)    dobDisplay.innerText    = "—";
+
       await db.collection("users").doc(uid).set({
         name: "",
         email: user.email || "",
@@ -108,96 +144,194 @@ async function loadProfileInfo() {
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       }, { merge: true });
 
-      document.getElementById("message").innerText = "নতুন প্রোফাইল তৈরি হয়েছে। এডিট করে তথ্য দিন।";
-      document.getElementById("message").style.color = "orange";
+      if (messageEl) {
+        messageEl.innerText = "নতুন প্রোফাইল তৈরি হয়েছে। এডিট করে তথ্য দিন।";
+        messageEl.style.color = "orange";
+      }
     }
 
   } catch (error) {
     console.error("Firebase Error:", error);
-    document.getElementById("nameDisplay").innerText = "—";
-    document.getElementById("emailDisplay").innerText = user.email || "—";
-    document.getElementById("genderDisplay").innerText = "—";
-    document.getElementById("dobDisplay").innerText = "—";
-    document.getElementById("message").innerText = "লোডে সমস্যা: " + error.message;
-    document.getElementById("message").style.color = "red";
+    if (nameDisplay)   nameDisplay.innerText   = "—";
+    if (emailDisplay)  emailDisplay.innerText  = user.email || "—";
+    if (genderDisplay) genderDisplay.innerText = "—";
+    if (dobDisplay)    dobDisplay.innerText    = "—";
+    if (messageEl) {
+      messageEl.innerText = "লোডে সমস্যা: " + error.message;
+      messageEl.style.color = "red";
+    }
   }
 
-  // Edit, Save, Cancel
-  document.getElementById("editBtn").addEventListener("click", () => toggleEditMode(true));
-  document.getElementById("cancelBtn").addEventListener("click", () => toggleEditMode(false));
-  document.getElementById("saveBtn").addEventListener("click", async () => {
-    const name = document.getElementById("nameInput").value.trim();
-    const gender = document.getElementById("genderInput").value;
-    const dob = document.getElementById("dobInput").value;
+  // ============================================
+  // Edit / Save / Cancel
+  // ============================================
+  const editBtn = document.getElementById("editBtn");
+  const saveBtn = document.getElementById("saveBtn");
+  const cancelBtn = document.getElementById("cancelBtn");
 
-    try {
-      await db.collection("users").doc(uid).update({ name, gender, dob });
-      document.getElementById("message").innerText = "তথ্য সংরক্ষণ হয়েছে!";
-      document.getElementById("message").style.color = "lightgreen";
+  // 🆕 onclick assignment diye replace — multiple listener attach hobe na
+  if (editBtn) {
+    editBtn.onclick = () => toggleEditMode(true);
+  }
 
-      const userNameDiv = document.getElementById("user-name");
-      if (userNameDiv && name) {
-        userNameDiv.innerHTML = `<span style="font-size:0.85rem; opacity:0.85; font-weight:600;">ইউজার:</span> <strong style="font-size:1.1rem;">${name}</strong>`;
+  if (cancelBtn) {
+    cancelBtn.onclick = () => toggleEditMode(false);
+  }
+
+  if (saveBtn) {
+    saveBtn.onclick = async () => {
+      const name = (nameInput?.value || "").trim();
+      const gender = genderInput?.value || "";
+      const dob = dobInput?.value || "";
+
+      // 🆕 Name required check
+      if (!name) {
+        if (messageEl) {
+          messageEl.innerText = "নাম অবশ্যই দিতে হবে!";
+          messageEl.style.color = "red";
+        }
+        return;
       }
 
-      toggleEditMode(false);
-      loadProfileInfo();
-    } catch (err) {
-      document.getElementById("message").innerText = "সংরক্ষণে সমস্যা: " + err.message;
-      document.getElementById("message").style.color = "red";
-    }
-  });
+      // 🆕 Button disable while saving
+      saveBtn.disabled = true;
+      saveBtn.textContent = "সংরক্ষণ হচ্ছে...";
 
-  // Logout
-  document.getElementById("logout-button").addEventListener("click", () => {
-    firebase.auth().signOut().then(() => { window.location.href = "login.html"; });
-  });
+      try {
+        await db.collection("users").doc(uid).update({ name, gender, dob });
 
-  // Password Toggle
-  document.getElementById("togglePasswordFormBtn").addEventListener("click", () => {
-    const form = document.getElementById("passwordForm");
-    form.style.display = form.style.display === "none" ? "block" : "none";
-    document.getElementById("passwordMessage").innerText = "";
-  });
-
-  // Password Change
-  document.getElementById("changePasswordBtn").addEventListener("click", () => {
-    const newPassword = document.getElementById("newPassword").value.trim();
-    const messageBox = document.getElementById("passwordMessage");
-
-    if (newPassword.length < 6) {
-      messageBox.style.color = "red";
-      messageBox.innerText = "পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে!";
-      return;
-    }
-
-    firebase.auth().currentUser.updatePassword(newPassword)
-      .then(() => {
-        messageBox.style.color = "lightgreen";
-        messageBox.innerText = "পাসওয়ার্ড পরিবর্তন সফল হয়েছে!";
-        document.getElementById("newPassword").value = "";
-      })
-      .catch(error => {
-        messageBox.style.color = "red";
-        if (error.code === 'auth/requires-recent-login') {
-          messageBox.innerText = "অনুগ্রহ করে আবার লগইন করে চেষ্টা করুন।";
-        } else {
-          messageBox.innerText = "সমস্যা হয়েছে! " + error.message;
+        if (messageEl) {
+          messageEl.innerText = "তথ্য সংরক্ষণ হয়েছে!";
+          messageEl.style.color = "lightgreen";
         }
-      });
-  });
+
+        // 🆕 Sidebar user-name update (simple textContent)
+        const userNameDiv = document.getElementById("user-name");
+        if (userNameDiv && name) {
+          userNameDiv.textContent = name;
+        }
+
+        // 🆕 Display update without full reload
+        if (nameDisplay)   nameDisplay.innerText   = name || "—";
+        if (genderDisplay) genderDisplay.innerText = gender || "—";
+        if (dobDisplay)    dobDisplay.innerText    = dob ? convertToBanglaDigits(dob) : "—";
+
+        toggleEditMode(false);
+
+      } catch (err) {
+        if (messageEl) {
+          messageEl.innerText = "সংরক্ষণে সমস্যা: " + err.message;
+          messageEl.style.color = "red";
+        }
+      } finally {
+        // 🆕 P1 fix: error hole o button state restore
+        saveBtn.disabled = false;
+        saveBtn.textContent = "সংরক্ষণ করুন";
+      }
+    };
+  }
+
+  // ============================================
+  // Logout
+  // ============================================
+  const logoutBtn = document.getElementById("logout-button");
+  if (logoutBtn) {
+    logoutBtn.onclick = () => {
+      // 🆕 confirm dialog
+      if (!confirm("আপনি কি লগআউট করতে চান?")) return;
+      firebase.auth().signOut()
+        .then(() => { window.location.href = "login.html"; })
+        .catch(err => {
+          if (messageEl) {
+            messageEl.innerText = "লগআউটে সমস্যা: " + err.message;
+            messageEl.style.color = "red";
+          }
+        });
+    };
+  }
+
+  // ============================================
+  // Password Change
+  // ============================================
+  const togglePasswordFormBtn = document.getElementById("togglePasswordFormBtn");
+  const passwordForm = document.getElementById("passwordForm");
+  const passwordMessage = document.getElementById("passwordMessage");
+
+  if (togglePasswordFormBtn && passwordForm) {
+    togglePasswordFormBtn.onclick = () => {
+      const isHidden = passwordForm.style.display === "none";
+      passwordForm.style.display = isHidden ? "block" : "none";
+      // 🆕 message clear on toggle
+      if (passwordMessage) passwordMessage.innerText = "";
+    };
+  }
+
+  const changePasswordBtn = document.getElementById("changePasswordBtn");
+  if (changePasswordBtn) {
+    changePasswordBtn.onclick = () => {
+      const newPasswordInput = document.getElementById("newPassword");
+      const newPassword = (newPasswordInput?.value || "").trim();
+
+      if (!passwordMessage) return;
+
+      if (newPassword.length < 6) {
+        passwordMessage.style.color = "red";
+        passwordMessage.innerText = "পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে!";
+        return;
+      }
+
+      changePasswordBtn.disabled = true;
+      changePasswordBtn.textContent = "আপডেট হচ্ছে...";
+
+      firebase.auth().currentUser.updatePassword(newPassword)
+        .then(() => {
+          passwordMessage.style.color = "lightgreen";
+          passwordMessage.innerText = "পাসওয়ার্ড পরিবর্তন সফল হয়েছে!";
+          if (newPasswordInput) newPasswordInput.value = "";
+          // 🆕 form hide on success
+          if (passwordForm) passwordForm.style.display = "none";
+        })
+        .catch(error => {
+          passwordMessage.style.color = "red";
+          if (error.code === 'auth/requires-recent-login') {
+            passwordMessage.innerText = "অনুগ্রহ করে আবার লগইন করে চেষ্টা করুন।";
+          } else {
+            passwordMessage.innerText = "সমস্যা হয়েছে! " + error.message;
+          }
+        })
+        .finally(() => {
+          // 🆕 restore button state
+          changePasswordBtn.disabled = false;
+          changePasswordBtn.textContent = "আপডেট করুন";
+        });
+    };
+  }
 }
 
-// 🔹 Toggle Edit Mode
+// ============================================
+// Toggle Edit Mode
+// ============================================
 function toggleEditMode(enable) {
-  document.getElementById("nameDisplay").style.display = enable ? "none" : "block";
-  document.getElementById("nameInput").style.display = enable ? "block" : "none";
-  document.getElementById("genderDisplay").style.display = enable ? "none" : "block";
-  document.getElementById("genderInput").style.display = enable ? "block" : "none";
-  document.getElementById("dobDisplay").style.display = enable ? "none" : "block";
-  document.getElementById("dobInput").style.display = enable ? "block" : "none";
+  const nameDisplay   = document.getElementById("nameDisplay");
+  const nameInput     = document.getElementById("nameInput");
+  const genderDisplay = document.getElementById("genderDisplay");
+  const genderInput   = document.getElementById("genderInput");
+  const dobDisplay    = document.getElementById("dobDisplay");
+  const dobInput      = document.getElementById("dobInput");
 
-  document.getElementById("editBtn").style.display = enable ? "none" : "inline-block";
-  document.getElementById("saveBtn").style.display = enable ? "inline-block" : "none";
-  document.getElementById("cancelBtn").style.display = enable ? "inline-block" : "none";
+  const editBtn   = document.getElementById("editBtn");
+  const saveBtn   = document.getElementById("saveBtn");
+  const cancelBtn = document.getElementById("cancelBtn");
+
+  // 🆕 Null guards — element na thakle crash hobe na
+  if (nameDisplay)   nameDisplay.style.display   = enable ? "none" : "block";
+  if (nameInput)     nameInput.style.display     = enable ? "block" : "none";
+  if (genderDisplay) genderDisplay.style.display = enable ? "none" : "block";
+  if (genderInput)   genderInput.style.display   = enable ? "block" : "none";
+  if (dobDisplay)    dobDisplay.style.display    = enable ? "none" : "block";
+  if (dobInput)      dobInput.style.display      = enable ? "block" : "none";
+
+  if (editBtn)   editBtn.style.display   = enable ? "none" : "inline-block";
+  if (saveBtn)   saveBtn.style.display   = enable ? "inline-block" : "none";
+  if (cancelBtn) cancelBtn.style.display = enable ? "inline-block" : "none";
 }
