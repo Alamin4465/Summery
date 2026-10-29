@@ -1,5 +1,5 @@
 // ============================================
-// dashboard.js — সম্পূর্ণ (transfer বাদ সহ)
+// dashboard.js — সম্পূর্ণ (ড্যাশবোর্ড চার্ট ফিক্সসহ)
 // ============================================
 
 function loadDashboardSummary() {
@@ -29,21 +29,25 @@ function loadDashboardSummary() {
 
     <div class="chartstyle">
       <div id="fuel-gauge"></div>
-      <canvas id="summaryChart"></canvas>
+      <div class="chart-wrapper">
+        <canvas id="summaryChart"></canvas>
+      </div>
     </div>
     <br>
     <div class="chartstyle">
       <div class="chart-wrapper" style="max-width: 800px; margin: auto;">
-        <div id="chartContainer" style="position: relative; width: 100%;">
-          <canvas id="lineChart" height="300"></canvas>
+        <div id="chartContainer" style="position: relative; width: 100%; height: 280px;">
+          <canvas id="lineChart"></canvas>
         </div>
-        <div style="display: flex; justify-content: center; margin-top: 20px;">
+        <div style="display: flex; justify-content: center; margin-top: 20px; width: 100%;">
           <input type="range" id="dateSlider" min="0" max="0" value="0" step="1"
             style="width:60%; height:16px; appearance:none; -webkit-appearance:none;
                    background:#ccc; border-radius:10px; outline:none; cursor:pointer;" />
         </div>
       </div>
-      <canvas id="categoryChart"></canvas>
+      <div class="chart-wrapper">
+        <canvas id="categoryChart"></canvas>
+      </div>
     </div>
   `;
 
@@ -125,6 +129,10 @@ function drawSummaryChart(income, expense, balance) {
   const canvas = document.getElementById('summaryChart');
   if (!canvas) return;
 
+  // 🆕 ডিফল্ট হাইট রিমুভ
+  canvas.removeAttribute('height');
+  canvas.removeAttribute('width');
+
   const ctx = canvas.getContext('2d');
 
   if (window._summaryChartInstance) {
@@ -183,6 +191,10 @@ function drawSummaryChart(income, expense, balance) {
 function drawCategoryChart(incomeData, expenseData) {
   const canvas = document.getElementById('categoryChart');
   if (!canvas) return;
+
+  // 🆕 ডিফল্ট হাইট রিমুভ
+  canvas.removeAttribute('height');
+  canvas.removeAttribute('width');
 
   const ctx = canvas.getContext('2d');
 
@@ -297,6 +309,10 @@ let lineChartInstance = null;
 function drawLineChart(dateData) {
   const canvas = document.getElementById('lineChart');
   if (!canvas) return;
+
+  // 🆕 ডিফল্ট হাইট রিমুভ
+  canvas.removeAttribute('height');
+  canvas.removeAttribute('width');
 
   const ctx = canvas.getContext('2d');
   const sortedDates = Object.keys(dateData || {}).sort();
@@ -496,8 +512,9 @@ function drawFuelGauge(savingRate) {
 
   const options = {
     chart: {
-      height: 300,
-      type: "radialBar"
+      height: 320, // 🆕 ApexCharts-এর জন্য নির্দিষ্ট পিক্সেল দেওয়া হলো
+      type: "radialBar",
+      fontFamily: 'SolaimanLipi, sans-serif'
     },
     series: [savingRate],
     labels: ["সঞ্চয় হার (%)"],
@@ -506,7 +523,7 @@ function drawFuelGauge(savingRate) {
       radialBar: {
         startAngle: -135,
         endAngle: 135,
-        hollow: { size: "50%" },
+        hollow: { size: "60%" }, // 🆕 ভেতরের গোলাকার অংশ একটু ছোট করা হলো
         track: {
           background: "rgba(0, 0, 0, 0.1)",
           startAngle: -135,
@@ -514,14 +531,14 @@ function drawFuelGauge(savingRate) {
         },
         dataLabels: {
           name: {
-            fontSize: "15px",
-            color: "#000",
+            fontSize: "16px",
+            color: "#ffffff", // 🆕 লেখা সাদা করা হলো
             offsetY: 30
           },
           value: {
             offsetY: -20,
-            fontSize: "22px",
-            color: "#000",
+            fontSize: "26px", // 🆕 সংখ্যা বড় করা হলো
+            color: "#ffffff",
             formatter: function (val) {
               return toBanglaNumber(val) + " %";
             }
