@@ -29,7 +29,7 @@ function transactionFilter() {
       </div>
     </div>
 
-    <div class="monthdaytable" style="overflow-x: auto; width: 100%;">
+    <div class="monthdaytable" style="width: 100%;">
       <table id="filteredTable" class="transaction-table">
         <thead>
           <tr>
@@ -41,6 +41,8 @@ function transactionFilter() {
         </thead>
         <tbody></tbody>
       </table>
+      
+      <!-- সামারি টেবিল -->
       <table id="monthlySummary" class="transaction-table"></table>
     </div>
 
@@ -67,7 +69,7 @@ function transactionFilter() {
       </select>
     </div>
 
-    <div class="table-section" style="overflow-x: auto; width: 100%;">
+    <div class="table-section" style="width: 100%;">
       <table id="typeFilteredTable" class="transaction-table">
         <thead>
           <tr>
@@ -124,7 +126,6 @@ function transactionFilter() {
     return str.replace(/\d/g, d => banglaDigits[d]);
   }
 
-  // 🆕 transfer বাদ দেওয়ার হেল্পার
   function isTransfer(data) {
     return data.type === "transfer" || data.category === "ওয়ালেট ট্রান্সফার";
   }
@@ -283,7 +284,7 @@ function transactionFilter() {
       const snapshot = await query.get();
       const transactions = snapshot.docs
         .map(doc => ({ id: doc.id, ...doc.data() }))
-        .filter(tx => !isTransfer(tx))  // 🆕 transfer বাদ
+        .filter(tx => !isTransfer(tx))
         .sort((a, b) => {
           const aT = a.timestamp?.seconds || 0;
           const bT = b.timestamp?.seconds || 0;
@@ -460,7 +461,7 @@ function transactionFilter() {
 
       snapshot.forEach(doc => {
         const data = doc.data();
-        if (isTransfer(data)) return;  // 🆕
+        if (isTransfer(data)) return;
         totalSaving += Number(data.amount) || 0;
       });
 
@@ -611,7 +612,7 @@ function transactionFilter() {
 
         snapshot.forEach(doc => {
           const data = doc.data();
-          if (isTransfer(data)) return;  // 🆕 transfer বাদ
+          if (isTransfer(data)) return;
 
           hasRow = true;
           const income = data.type === "income" ? formatTaka(data.amount) : "";
@@ -671,7 +672,7 @@ function transactionFilter() {
       .then(snapshot => {
         const sorted = snapshot.docs
           .map(doc => ({ id: doc.id, ...doc.data() }))
-          .filter(d => !isTransfer(d))  // 🆕 transfer বাদ
+          .filter(d => !isTransfer(d))
           .sort((a, b) => String(a.date || '').localeCompare(String(b.date || '')));
 
         if (sorted.length === 0) {
@@ -705,6 +706,9 @@ function transactionFilter() {
       });
   }
 
+  // ============================================
+  // 🆕 DAILY SUMMARY (ছবির মতো বর্ডার ও width)
+  // ============================================
   function calculateDailySummary(userId, date) {
     const ref = db.collection("users").doc(userId).collection("transactions");
 
@@ -716,7 +720,7 @@ function transactionFilter() {
 
       prevSnap.forEach(doc => {
         const d = doc.data();
-        if (isTransfer(d)) return;  // 🆕
+        if (isTransfer(d)) return;
         const amt = Number(d.amount) || 0;
         if (d.type === "income") prevBalance += amt;
         else if (d.type === "expense") prevBalance -= amt;
@@ -724,7 +728,7 @@ function transactionFilter() {
 
       todaySnap.forEach(doc => {
         const d = doc.data();
-        if (isTransfer(d)) return;  // 🆕
+        if (isTransfer(d)) return;
         const amt = Number(d.amount) || 0;
         if (d.type === "income") income += amt;
         else if (d.type === "expense") expense += amt;
@@ -743,47 +747,59 @@ function transactionFilter() {
       const summaryTable = document.getElementById("monthlySummary");
       if (!summaryTable) return;
 
+      summaryTable.style.display = "table";
       summaryTable.innerHTML = `
+        <colgroup>
+          <col style="width: 15%">
+          <col style="width: 25%">
+          <col style="width: 20%">
+          <col style="width: 20%">
+          <col style="width: 20%">
+        </colgroup>
         <thead>
           <tr>
             <th>তারিখ</th>
             <th>বিবরণ</th>
-            <th>আয়</th>
-            <th>ব্যয়</th>
+            <th>আয় টাকা</th>
+            <th>ব্যয় টাকা</th>
             <th>টাকা</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td rowspan="4"><b>${dateLabel}</b></td>
-            <td colspan="3">শেষ টাকা</td>
-            <td>${formatTaka(prevBalance)}</td>
+            <td rowspan="4" class="summary-date-cell">${dateLabel}</td>
+            <td>শেষ টাকা</td>
+            <td class="summary-amount"></td>
+            <td class="summary-amount"></td>
+            <td class="summary-amount">${formatTaka(prevBalance)}</td>
           </tr>
           <tr>
-            <td>আজকের আয়</td>
-            <td>${formatTaka(income)}</td>
-            <td></td>
-            <td></td>
+            <td>আয়</td>
+            <td class="summary-amount">${formatTaka(income)}</td>
+            <td class="summary-amount"></td>
+            <td class="summary-amount"></td>
           </tr>
           <tr>
-            <td>আজকের ব্যয়</td>
-            <td></td>
-            <td>${formatTaka(expense)}</td>
-            <td>${formatTaka(daytotal)}</td>
+            <td>ব্যয়</td>
+            <td class="summary-amount"></td>
+            <td class="summary-amount">${formatTaka(expense)}</td>
+            <td class="summary-amount">${formatTaka(daytotal)}</td>
           </tr>
-          <tr>
+          <tr class="summary-total-row">
             <td colspan="3">মোট</td>
-            <td>${formatTaka(total)}</td>
+            <td class="summary-amount">${formatTaka(total)}</td>
           </tr>
         </tbody>
       `;
-      summaryTable.style.display = "table";
       drawFilterSummaryChart(`${dateLabel} — আয় / ব্যয় / নিট`, income, expense);
     }).catch(err => {
       console.error("calculateDailySummary error:", err);
     });
   }
 
+  // ============================================
+  // 🆕 MONTHLY SUMMARY (ছবির মতো বর্ডার ও width)
+  // ============================================
   function calculateMonthlySummary(userId, month) {
     const [year, mon] = month.split("-").map(Number);
     if (!year || !mon) return;
@@ -806,7 +822,7 @@ function transactionFilter() {
 
       prevSnap.forEach(doc => {
         const d = doc.data();
-        if (isTransfer(d)) return;  // 🆕
+        if (isTransfer(d)) return;
         const amt = Number(d.amount) || 0;
         if (d.type === "income") prevBalance += amt;
         else if (d.type === "expense") prevBalance -= amt;
@@ -814,7 +830,7 @@ function transactionFilter() {
 
       monthSnap.forEach(doc => {
         const d = doc.data();
-        if (isTransfer(d)) return;  // 🆕
+        if (isTransfer(d)) return;
         const amt = Number(d.amount) || 0;
         if (d.type === "income") income += amt;
         else if (d.type === "expense") expense += amt;
@@ -833,41 +849,50 @@ function transactionFilter() {
       const summaryTable = document.getElementById("monthlySummary");
       if (!summaryTable) return;
 
+      summaryTable.style.display = "table";
       summaryTable.innerHTML = `
+        <colgroup>
+          <col style="width: 15%">
+          <col style="width: 25%">
+          <col style="width: 20%">
+          <col style="width: 20%">
+          <col style="width: 20%">
+        </colgroup>
         <thead>
           <tr>
             <th>মাস</th>
             <th>বিবরণ</th>
-            <th>আয়</th>
-            <th>ব্যয়</th>
+            <th>আয় টাকা</th>
+            <th>ব্যয় টাকা</th>
             <th>টাকা</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td rowspan="4"><b>${monthLabel}</b></td>
-            <td colspan="3">শেষ টাকা</td>
-            <td>${formatTaka(prevBalance)}</td>
+            <td rowspan="4" class="summary-date-cell">${monthLabel}</td>
+            <td>শেষ টাকা</td>
+            <td class="summary-amount"></td>
+            <td class="summary-amount"></td>
+            <td class="summary-amount">${formatTaka(prevBalance)}</td>
           </tr>
           <tr>
-            <td>মাসের আয়</td>
-            <td>${formatTaka(income)}</td>
-            <td></td>
-            <td></td>
+            <td>আয়</td>
+            <td class="summary-amount">${formatTaka(income)}</td>
+            <td class="summary-amount"></td>
+            <td class="summary-amount"></td>
           </tr>
           <tr>
-            <td>মাসের ব্যয়</td>
-            <td></td>
-            <td>${formatTaka(expense)}</td>
-            <td>${formatTaka(monthtotal)}</td>
+            <td>ব্যয়</td>
+            <td class="summary-amount"></td>
+            <td class="summary-amount">${formatTaka(expense)}</td>
+            <td class="summary-amount">${formatTaka(monthtotal)}</td>
           </tr>
-          <tr>
+          <tr class="summary-total-row">
             <td colspan="3">মোট</td>
-            <td>${formatTaka(total)}</td>
+            <td class="summary-amount">${formatTaka(total)}</td>
           </tr>
         </tbody>
       `;
-      summaryTable.style.display = "table";
       drawFilterSummaryChart(`${monthLabel} — আয় / ব্যয় / নিট`, income, expense);
     }).catch(err => {
       console.error("calculateMonthlySummary error:", err);
