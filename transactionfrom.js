@@ -1,25 +1,34 @@
-let currentUser = null;
+// ============================================
+// ট্রানজেকশন সেকশন (transactionfrom.js)
+// ============================================
+
 let unsubscribeTransaction = null;
 let allTransactions = [];
 let currentFilter = "all";
 
-// 🆕 ওয়ালেট স্টেট
 let allWallets = [];
 let unsubscribeWallets = null;
 
 // ------------------ বাংলা সংখ্যা ফরম্যাট ------------------
 function toBanglaNumber(number) {
-  if (typeof number !== "number") number = parseFloat(number) || 0;
+  if (typeof number !== "number") number = parseFloat(number);
+  if (!Number.isFinite(number)) number = 0;
   return number.toLocaleString('bn-BD', { maximumFractionDigits: 2 });
+}
+
+// 🆕 transfer বাদ দেওয়ার হেল্পার
+function isTransferTx(t) {
+  return t && (t.type === "transfer" || t.category === "ওয়ালেট ট্রান্সফার");
 }
 
 // ------------------ ট্রানজেকশন লোড ------------------
 function loadTransactions() {
   const content = document.getElementById("content");
+  if (!content) return;
+
   content.innerHTML = `
     <h2 class="titel">ট্রানজেকশন</h2>
 
-    <!-- 🆕 ওয়ালেট সারসংক্ষেপ এখানে -->
     <div id="walletSummary"></div>
 
     <div class="Filter-tabel">
@@ -43,10 +52,12 @@ function loadTransactions() {
       </table>
     </div>
     <div id="summary" style="margin-top: 20px; font-weight: bold;"></div>
-    <canvas id="incomeExpenseChart" width="400" height="200"></canvas>
+
+    <div class="chart-container" style="max-width: 450px; height: 350px;">
+      <canvas id="incomeExpenseChart"></canvas>
+    </div>
   `;
 
-  // ফিল্টার বাটন ইভেন্ট
   document.querySelectorAll("#filterButtons .filterBtn").forEach((btn) => {
     btn.addEventListener("click", () => {
       document.querySelectorAll("#filterButtons .filterBtn").forEach((b) =>
@@ -60,52 +71,49 @@ function loadTransactions() {
     });
   });
 
-  // ইভেন্ট ডেলিগেশন
   const tbody = document.querySelector("#transactionTable tbody");
-  tbody.addEventListener("click", async (e) => {
-    if (e.target.classList.contains("edit_Btn")) {
-      showFixedOverlay(e.target.dataset.id);
-    }
-
-    if (e.target.classList.contains("delete_Btn")) {
-      if (!confirm("আপনি কি সত্যিই ডিলিট করতে চান?")) return;
-
-      const docId = e.target.dataset.id;
-      const t = allTransactions.find(x => x.id === docId);
-      if (!t) return;
-
-      const db = firebase.firestore();
-      const batch = db.batch();
-
-      // 🆕 ডিলিটের সময় ওয়ালেট ব্যালেন্স উল্টে দেওয়া
-      if (t.walletId) {
-        const walletRef = db.collection("users").doc(currentUser.uid)
-          .collection("wallets").doc(t.walletId);
-        const delta = t.type === 'income'
-          ? -parseFloat(t.amount || 0)
-          : parseFloat(t.amount || 0);
-        batch.update(walletRef, {
-          balance: firebase.firestore.FieldValue.increment(delta)
-        });
+  if (tbody) {
+    tbody.addEventListener("click", async (e) => {
+      if (e.target.classList.contains("edit_Btn")) {
+        showFixedOverlay(e.target.dataset.id);
       }
 
-      batch.delete(db.collection("users").doc(currentUser.uid)
-        .collection("transactions").doc(docId));
+      if (e.target.classList.contains("delete_Btn")) {
+        if (!confirm("আপনি কি সত্যিই ডিলিট করতে চান?")) return;
 
-      try {
-        await batch.commit();
-      } catch (err) {
-        alert("ডিলিটে সমস্যা: " + err.message);
+        const docId = e.target.dataset.id;
+        const t = allTransactions.find(x => x.id === docId);
+        if (!t) return;
+
+        const db = firebase.firestore();
+        const batch = db.batch();
+
+        if (t.walletId) {
+          const oldAmount = Number(t.amount) || 0;
+          const walletRef = db.collection("users").doc(currentUser.uid)
+            .collection("wallets").doc(t.walletId);
+          const delta = t.type === 'income' ? -oldAmount : oldAmount;
+          batch.update(walletRef, {
+            balance: firebase.firestore.FieldValue.increment(delta)
+          });
+        }
+
+        batch.delete(db.collection("users").doc(currentUser.uid)
+          .collection("transactions").doc(docId));
+
+        try {
+          await batch.commit();
+        } catch (err) {
+          alert("ডিলিটে সমস্যা: " + err.message);
+        }
       }
-    }
-  });
+    });
+  }
 
-  // প্রথমবার ওয়ালেট লোড + ট্রানজেকশন
   loadWalletsForTransactions();
   fetchTransactionsRealtime();
 }
 
-// 🆕 ওয়ালেট লোড (রিয়েল-টাইম)
 function loadWalletsForTransactions() {
   if (!currentUser) return;
   if (unsubscribeWallets) unsubscribeWallets();
@@ -127,17 +135,14 @@ function loadWalletsForTransactions() {
     }, err => console.error("ওয়ালেট লোডে সমস্যা:", err));
 }
 
-// 🆕 ওয়ালেট সারসংক্ষেপ রেন্ডার
 function renderWalletSummary() {
   const div = document.getElementById('walletSummary');
   if (!div) return;
 
   if (allWallets.length === 0) {
     div.innerHTML = `
-      <p style="color:#fff; text-align:center; padding:14px;
-                background:rgba(0,0,0,0.25); border-radius:10px;
-                text-shadow:1px 1px 3px rgba(0,0,0,0.6);">
-        💼 এখনো কোনো ওয়ালেট নেই। ফর্মস → ওয়ালেট ম্যানেজ থেকে যোগ করুন।
+      <p style="text-align:center; padding:14px; background:var(--glass-bg); border-radius:10px;">
+        💼 এখনো কোনো ওয়ালেট নেই। সেটিংস → ওয়ালেট ম্যানেজ থেকে যোগ করুন।
       </p>`;
     return;
   }
@@ -149,17 +154,17 @@ function renderWalletSummary() {
   let total = 0;
   let rows = '';
   sorted.forEach(w => {
-    const bal = w.balance || 0;
+    const bal = Number(w.balance) || 0;
     total += bal;
-    const color = bal >= 0 ? '#81c784' : '#ef5350';
+    const color = bal >= 0 ? 'var(--success-dark)' : 'var(--danger-dark)';
     rows += `
       <tr>
-        <td>${w.name}</td>
+        <td>${w.name || '—'}</td>
         <td style="color:${color}; font-weight:bold;">${toBanglaNumber(bal)} ৳</td>
       </tr>`;
   });
 
-  const totalColor = total >= 0 ? '#66bb6a' : '#ef5350';
+  const totalColor = total >= 0 ? 'var(--success-dark)' : 'var(--danger-dark)';
 
   div.innerHTML = `
     <h3>💼 ওয়ালেট সারসংক্ষেপ</h3>
@@ -169,7 +174,7 @@ function renderWalletSummary() {
       </thead>
       <tbody>${rows}</tbody>
       <tfoot>
-        <tr style="background:rgba(102,51,153,0.5); font-weight:bold;">
+        <tr style="background:rgba(102,51,153,0.2); font-weight:bold;">
           <td>মোট</td>
           <td style="color:${totalColor};">${toBanglaNumber(total)} ৳</td>
         </tr>
@@ -181,12 +186,17 @@ function renderWalletSummary() {
 let incomeExpenseChart = null;
 
 function renderIncomeExpenseCategoryChart(transactions, filter) {
+  const canvas = document.getElementById("incomeExpenseChart");
+  if (!canvas) return;
+
   const categoryTotals = {};
 
-  transactions.forEach((t) => {
+  (transactions || []).forEach((t) => {
+    if (isTransferTx(t)) return;  // 🆕 transfer বাদ
+
     const cat = t.category || "অন্যান্য";
     const type = t.type || "expense";
-    const amount = parseFloat(t.amount || 0);
+    const amount = Number(t.amount) || 0;
 
     if (!categoryTotals[cat]) categoryTotals[cat] = { income: 0, expense: 0 };
     categoryTotals[cat][type] += amount;
@@ -197,26 +207,26 @@ function renderIncomeExpenseCategoryChart(transactions, filter) {
   let backgroundColors = [];
 
   const greenShades = [
-    "rgba(0, 128, 0, 0.7)",
-    "rgba(34, 139, 34, 0.7)",
-    "rgba(50, 205, 50, 0.7)",
-    "rgba(144, 238, 144, 0.7)",
-    "rgba(0, 100, 0, 0.7)"
+    "rgba(0, 128, 0, 0.8)",
+    "rgba(34, 139, 34, 0.8)",
+    "rgba(50, 205, 50, 0.8)",
+    "rgba(144, 238, 144, 0.8)",
+    "rgba(0, 100, 0, 0.8)"
   ];
   const redShades = [
-    "rgba(255, 0, 0, 0.7)",
-    "rgba(178, 34, 34, 0.7)",
-    "rgba(255, 99, 71, 0.7)",
-    "rgba(220, 20, 60, 0.7)",
-    "rgba(139, 0, 0, 0.7)"
+    "rgba(255, 0, 0, 0.8)",
+    "rgba(178, 34, 34, 0.8)",
+    "rgba(255, 99, 71, 0.8)",
+    "rgba(220, 20, 60, 0.8)",
+    "rgba(139, 0, 0, 0.8)"
   ];
 
   if (filter === "income") {
-    labels = Object.keys(categoryTotals);
+    labels = Object.keys(categoryTotals).filter(c => categoryTotals[c].income > 0);
     data = labels.map(cat => categoryTotals[cat].income);
     backgroundColors = labels.map((_, i) => greenShades[i % greenShades.length]);
   } else if (filter === "expense") {
-    labels = Object.keys(categoryTotals);
+    labels = Object.keys(categoryTotals).filter(c => categoryTotals[c].expense > 0);
     data = labels.map(cat => categoryTotals[cat].expense);
     backgroundColors = labels.map((_, i) => redShades[i % redShades.length]);
   } else {
@@ -238,39 +248,54 @@ function renderIncomeExpenseCategoryChart(transactions, filter) {
   }
 
   const totalAmount = data.reduce((a, b) => a + b, 0);
+  const hasData = data.length > 0 && totalAmount > 0;
 
-  const ctx = document.getElementById("incomeExpenseChart").getContext("2d");
-  if (incomeExpenseChart) incomeExpenseChart.destroy();
+  const ctx = canvas.getContext("2d");
+  if (incomeExpenseChart) {
+    try { incomeExpenseChart.destroy(); } catch (e) {}
+    incomeExpenseChart = null;
+  }
+
+  const safeLabels = hasData ? labels : ['কোনো ডাটা নেই'];
+  const safeData = hasData ? data : [1];
+  const safeColors = hasData ? backgroundColors : ['#9ca3af'];
+
+  const textColor = (function () {
+    try {
+      return getComputedStyle(document.body).getPropertyValue('--text-primary').trim() || "#111";
+    } catch (e) {
+      return "#111";
+    }
+  })();
 
   const centerTextPlugin = {
     id: 'centerText',
     afterDraw(chart) {
-      const { ctx, chartArea: { width, height, top, left } } = chart;
+      if (!hasData) return;
+
+      const meta = chart._metasets && chart._metasets[0];
+      const firstArc = meta && meta.data && meta.data[0];
+      const outerRadius = firstArc && firstArc.outerRadius;
+      if (!outerRadius || outerRadius <= 0) return;
+
+      const { width, height, ctx } = chart;
+      const centerX = width / 2;
+      const centerY = height / 2;
+
       ctx.save();
-      ctx.fillStyle = "#fff";
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, outerRadius * 0.5, 0, 2 * Math.PI);
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+      ctx.fill();
+      ctx.closePath();
+      ctx.restore();
+
+      ctx.save();
+      ctx.fillStyle = textColor;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.font = "bold 16px sans-serif";
-      ctx.fillText(toBanglaNumber(totalAmount) + "৳", left + width / 2, top + height / 2);
-      ctx.restore();
-    }
-  };
-
-  const whiteLegendPlugin = {
-    id: 'whiteLegend',
-    afterDraw(chart) {
-      const legend = chart.legend;
-      if (!legend) return;
-      const ctx = chart.ctx;
-      ctx.save();
-      ctx.fillStyle = "#fff";
-      ctx.textAlign = "left";
-      ctx.textBaseline = "middle";
-      legend.legendItems.forEach(item => {
-        const textX = item.left + 25;
-        const textY = item.top + item.height / 2;
-        ctx.fillText(item.text, textX, textY);
-      });
+      ctx.fillText(toBanglaNumber(totalAmount) + "৳", centerX, centerY);
       ctx.restore();
     }
   };
@@ -278,52 +303,55 @@ function renderIncomeExpenseCategoryChart(transactions, filter) {
   incomeExpenseChart = new Chart(ctx, {
     type: "doughnut",
     data: {
-      labels: labels,
+      labels: safeLabels,
       datasets: [{
-        data: data,
-        backgroundColor: backgroundColors,
+        data: safeData,
+        backgroundColor: safeColors,
         borderColor: "transparent",
         borderWidth: 2,
-        hoverOffset: 30,
+        hoverOffset: hasData ? 30 : 0,
         cutout: "50%"
       }]
     },
     options: {
+      responsive: true,
+      maintainAspectRatio: false,
       plugins: {
         legend: {
-          display: true,
+          display: hasData,
           position: "right",
           labels: {
-            color: "#fff",
-            font: { size: 12, weight: "bold" },
+            color: textColor,
+            font: { size: 12, weight: "bold" }
           }
         },
         tooltip: {
+          enabled: hasData,
           callbacks: {
             label: function (tooltipItem) {
-              const value = tooltipItem.raw;
-              const sum = data.reduce((a, b) => a + b, 0);
-              const percentage = ((value / sum) * 100).toFixed(2);
+              const value = Number(tooltipItem.raw) || 0;
+              const sum = safeData.reduce((a, b) => a + b, 0);
+              const percentage = sum > 0 ? ((value / sum) * 100).toFixed(2) : '০.০০';
               return `${tooltipItem.label}: ${toBanglaNumber(value)} (${percentage}%)`;
             }
           }
         },
         datalabels: {
           color: '#fff',
-          display: true,
+          display: hasData,
           formatter: (value, ctx) => {
             const sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+            if (sum === 0) return '০%';
             const percentage = ((value / sum) * 100).toFixed(2);
             return percentage + "%";
           }
         }
       }
     },
-    plugins: [centerTextPlugin, ChartDataLabels, whiteLegendPlugin]
+    plugins: [centerTextPlugin, ChartDataLabels]
   });
 }
 
-// ------------------ রিয়েলটাইম ট্রানজেকশন ------------------
 function fetchTransactionsRealtime() {
   if (!currentUser) return;
   if (unsubscribeTransaction) unsubscribeTransaction();
@@ -339,23 +367,24 @@ function fetchTransactionsRealtime() {
     .onSnapshot((snapshot) => {
       allTransactions = [];
       snapshot.forEach((doc) => {
-        allTransactions.push({ id: doc.id, ...doc.data() });
+        const data = doc.data();
+        if (isTransferTx(data)) return;  // 🆕 transfer বাদ
+        allTransactions.push({ id: doc.id, ...data });
       });
 
       renderTransactionTable();
       renderSummary(allTransactions);
       renderIncomeExpenseCategoryChart(allTransactions, currentFilter);
-    });
+    }, err => console.error("Transactions realtime error:", err));
 }
 
-// 🆕 টেবিল রেন্ডার (ফিল্টার + ওয়ালেট কলাম সহ)
 function renderTransactionTable() {
   const tbody = document.querySelector("#transactionTable tbody");
   if (!tbody) return;
   tbody.innerHTML = "";
 
   const filtered = allTransactions.filter(
-    t => currentFilter === "all" || (t.type || "") === currentFilter
+    t => (currentFilter === "all" || (t.type || "") === currentFilter) && !isTransferTx(t)
   );
 
   filtered.forEach((t) => {
@@ -369,7 +398,7 @@ function renderTransactionTable() {
     let walletName = '—';
     if (t.walletId) {
       const w = allWallets.find(x => x.id === t.walletId);
-      if (w) walletName = w.name;
+      if (w) walletName = w.name || '—';
     }
 
     row.innerHTML = `
@@ -377,7 +406,7 @@ function renderTransactionTable() {
       <td>${type === "income" ? "আয়" : "ব্যয়"}</td>
       <td>${t.category || ""}</td>
       <td>${walletName}</td>
-      <td>${toBanglaNumber(parseFloat(t.amount || 0))}</td>
+      <td>${toBanglaNumber(Number(t.amount) || 0)}</td>
       <td>
         <button class="edit_Btn" data-id="${t.id}">পরিবর্তন</button>
         <button class="delete_Btn" data-id="${t.id}">মুছে ফেলো</button>
@@ -387,22 +416,21 @@ function renderTransactionTable() {
   });
 }
 
-// ------------------ সামারি রেন্ডার ------------------
 function renderSummary(transactions) {
   const summaryDiv = document.getElementById("summary");
   if (!summaryDiv) return;
 
-  const filtered = transactions.filter(
-    t => currentFilter === "all" || (t.type || "") === currentFilter
+  const filtered = (transactions || []).filter(
+    t => (currentFilter === "all" || (t.type || "") === currentFilter) && !isTransferTx(t)
   );
 
   const totalIncome = filtered
     .filter((t) => t.type === "income")
-    .reduce((acc, t) => acc + parseFloat(t.amount || 0), 0);
+    .reduce((acc, t) => acc + (Number(t.amount) || 0), 0);
 
   const totalExpense = filtered
     .filter((t) => t.type === "expense")
-    .reduce((acc, t) => acc + parseFloat(t.amount || 0), 0);
+    .reduce((acc, t) => acc + (Number(t.amount) || 0), 0);
 
   const balance = totalIncome - totalExpense;
 
@@ -418,7 +446,6 @@ function renderSummary(transactions) {
   summaryDiv.innerHTML = html;
 }
 
-// ------------------ Overlay (এডিট) — ওয়ালেট সহ ------------------
 async function showFixedOverlay(id) {
   if (!currentUser) return;
 
@@ -428,9 +455,22 @@ async function showFixedOverlay(id) {
     .collection("transactions")
     .doc(id);
 
-  const doc = await docRef.get();
-  const data = doc.data();
-  if (!data) return alert("ডাটা পাওয়া যায়নি!");
+  let data;
+  try {
+    const doc = await docRef.get();
+    if (!doc.exists) {
+      return alert("ডাটা পাওয়া যায়নি!");
+    }
+    data = doc.data();
+    if (!data) return alert("ডাটা পাওয়া যায়নি!");
+  } catch (err) {
+    return alert("ডাটা লোডে সমস্যা: " + err.message);
+  }
+
+  // 🆕 transfer হলে এডিট করা যাবে না
+  if (isTransferTx(data)) {
+    return alert("ওয়ালেট ট্রান্সফার এন্ট্রি এখান থেকে এডিট করা যাবে না।");
+  }
 
   const existing = document.querySelector(".edit-overlay-fixed");
   if (existing) existing.remove();
@@ -439,34 +479,21 @@ async function showFixedOverlay(id) {
 
   const overlay = document.createElement("div");
   overlay.className = "edit-overlay-fixed";
-  overlay.style.cssText = `
-    position: fixed;
-    top: 50px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: white;
-    padding: 20px;
-    border-radius: 12px;
-    width: 90%;
-    max-width: 400px;
-    z-index: 9999;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-  `;
 
   overlay.innerHTML = `
     <h3>ট্রানজেকশন এডিট করুন</h3>
-    <input type="date" value="${data.date || ''}" class="date-input"/><br>
-    <select class="type-select">
+    <input type="date" value="${data.date || ''}" class="form-input date-input"/>
+    <select class="form-input type-select">
       <option value="income" ${data.type === 'income' ? 'selected' : ''}>আয়</option>
       <option value="expense" ${data.type === 'expense' ? 'selected' : ''}>ব্যয়</option>
-    </select><br>
-    <select class="category-select">
+    </select>
+    <select class="form-input category-select">
       <option value="">ক্যাটেগরি নির্বাচন করুন</option>
-    </select><br>
-    <select class="wallet-select">
+    </select>
+    <select class="form-input wallet-select">
       <option value="">ওয়ালেট নির্বাচন করুন</option>
-    </select><br>
-    <input type="number" value="${data.amount || 0}" class="amount-input"/><br>
+    </select>
+    <input type="number" value="${Number(data.amount) || 0}" class="form-input amount-input"/>
     <button class="save-btn">সংরক্ষণ করুন</button>
     <button class="cancel-btn">বাতিল</button>
   `;
@@ -477,38 +504,40 @@ async function showFixedOverlay(id) {
   const categorySelect = overlay.querySelector(".category-select");
   const walletSelect = overlay.querySelector(".wallet-select");
 
-  // ক্যাটেগরি লোড
   async function loadCategories(type) {
-    const snapshot = await db
-      .collection("users")
-      .doc(currentUser.uid)
-      .collection("categories")
-      .where("type", "==", type)
-      .get();
+    try {
+      const snapshot = await db
+        .collection("users")
+        .doc(currentUser.uid)
+        .collection("categories")
+        .where("type", "==", type)
+        .get();
 
-    categorySelect.innerHTML = `<option value="">ক্যাটেগরি নির্বাচন করুন</option>`;
-    snapshot.docs.forEach(d => {
-      const opt = document.createElement("option");
-      opt.value = d.data().name;
-      opt.textContent = d.data().name;
-      if (d.data().name === data.category) opt.selected = true;
-      categorySelect.appendChild(opt);
-    });
+      categorySelect.innerHTML = `<option value="">ক্যাটেগরি নির্বাচন করুন</option>`;
+      snapshot.docs.forEach(d => {
+        const opt = document.createElement("option");
+        opt.value = d.data().name;
+        opt.textContent = d.data().name;
+        if (d.data().name === data.category) opt.selected = true;
+        categorySelect.appendChild(opt);
+      });
+    } catch (err) {
+      console.error("Category load error:", err);
+    }
   }
 
-  // ওয়ালেট লোড
   function loadWalletsDropdown() {
     walletSelect.innerHTML = `<option value="">ওয়ালেট নির্বাচন করুন</option>`;
     allWallets.forEach(w => {
       const opt = document.createElement("option");
       opt.value = w.id;
-      opt.textContent = `${w.name} (${toBanglaNumber(w.balance || 0)} ৳)`;
+      opt.textContent = `${w.name} (${toBanglaNumber(Number(w.balance) || 0)} ৳)`;
       if (w.id === data.walletId) opt.selected = true;
       walletSelect.appendChild(opt);
     });
   }
 
-  await loadCategories(data.type);
+  await loadCategories(data.type || "income");
   loadWalletsDropdown();
 
   typeSelect.addEventListener("change", () => loadCategories(typeSelect.value));
@@ -516,7 +545,11 @@ async function showFixedOverlay(id) {
   const saveBtn = overlay.querySelector(".save-btn");
   const cancelBtn = overlay.querySelector(".cancel-btn");
 
-  // সেভ — পুরনো ওয়ালেট রিভার্স, নতুন ওয়ালেটে প্রয়োগ
+  function closeOverlay() {
+    overlay.remove();
+    document.body.style.overflow = "";
+  }
+
   saveBtn.addEventListener("click", async () => {
     const dateInput = overlay.querySelector(".date-input");
     const amountInput = overlay.querySelector(".amount-input");
@@ -533,19 +566,18 @@ async function showFixedOverlay(id) {
 
     const batch = db.batch();
 
-    // ১. পুরনো ওয়ালেটের প্রভাব উল্টাও (যদি ছিল)
+    const oldAmount = Number(data.amount) || 0;
+    const oldType = data.type || 'expense';
+
     if (data.walletId) {
       const oldWalletRef = db.collection("users").doc(currentUser.uid)
         .collection("wallets").doc(data.walletId);
-      const oldDelta = data.type === 'income'
-        ? -parseFloat(data.amount || 0)
-        : parseFloat(data.amount || 0);
+      const oldDelta = oldType === 'income' ? -oldAmount : oldAmount;
       batch.update(oldWalletRef, {
         balance: firebase.firestore.FieldValue.increment(oldDelta)
       });
     }
 
-    // ২. নতুন ওয়ালেটে নতুন প্রভাব প্রয়োগ
     const newWalletRef = db.collection("users").doc(currentUser.uid)
       .collection("wallets").doc(newWalletId);
     const newDelta = typeSelect.value === 'income' ? newAmount : -newAmount;
@@ -553,27 +585,22 @@ async function showFixedOverlay(id) {
       balance: firebase.firestore.FieldValue.increment(newDelta)
     });
 
-    // ৩. ট্রানজেকশন আপডেট
     batch.update(docRef, {
       date: dateInput.value,
       type: typeSelect.value,
       category: categorySelect.value,
       amount: newAmount,
       walletId: newWalletId,
-      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
     });
 
     try {
       await batch.commit();
-      overlay.remove();
-      document.body.style.overflow = "";
+      closeOverlay();
     } catch (err) {
       alert("আপডেটে সমস্যা: " + err.message);
     }
-  }, { once: true });
+  });
 
-  cancelBtn.addEventListener("click", () => {
-    overlay.remove();
-    document.body.style.overflow = "";
-  }, { once: true });
+  cancelBtn.addEventListener("click", closeOverlay);
 }
