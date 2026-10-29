@@ -1,5 +1,11 @@
+// ============================================
+// dashboard.js — সম্পূর্ণ (transfer বাদ সহ)
+// ============================================
+
 function loadDashboardSummary() {
   const content = document.getElementById('content');
+  if (!content) return;
+
   content.innerHTML = `
     <h2 class="titel">ড্যাশবোর্ড</h2>
 
@@ -42,49 +48,79 @@ function loadDashboardSummary() {
   `;
 
   const db = firebase.firestore();
-  db.collection("users").doc(currentUser.uid).collection("transactions").onSnapshot(snapshot => {
-    let totalIncome = 0;
-    let totalExpense = 0;
-    let incomeByCategory = {};
-    let expenseByCategory = {};
-    let dateWise = {};
+  const userRef = db.collection("users").doc(currentUser.uid);
 
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      const amount = parseFloat(data.amount || 0);
-      const type = data.type;
-      const category = data.category || "অন্যান্য";
-      const date = data.date || "অজানা";
+  userRef.onSnapshot(userDoc => {
+    const userData = userDoc.data() || {};
+    const totalTransferredSavings = userData.totalTransferredSavings || 0;
 
-      if (type === "income") {
-        totalIncome += amount;
-        incomeByCategory[category] = (incomeByCategory[category] || 0) + amount;
-      } else if (type === "expense") {
-        totalExpense += amount;
-        expenseByCategory[category] = (expenseByCategory[category] || 0) + amount;
-      }
+    userRef.collection("transactions").onSnapshot(snapshot => {
+      let totalIncome = 0;
+      let totalExpense = 0;
+      let totalSavingsRaw = 0;
+      let incomeByCategory = {};
+      let expenseByCategory = {};
+      let dateWise = {};
 
-      if (!dateWise[date]) dateWise[date] = { income: 0, expense: 0 };
-      dateWise[date][type] += amount;
-    });
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const amount = parseFloat(data.amount || 0);
+        const type = data.type;
+        const category = data.category || "অন্যান্য";
+        const date = data.date || "অজানা";
 
-    const balance = totalIncome - totalExpense;
-    const savingRate = totalIncome > 0 ? Math.round((balance / totalIncome) * 100) : 0;
+        if (!Number.isFinite(amount)) return;
 
-    document.getElementById("totalIncome").textContent = toBanglaNumber(totalIncome);
-    document.getElementById("totalExpense").textContent = toBanglaNumber(totalExpense);
-    document.getElementById("balance").textContent = toBanglaNumber(balance);
+        // 🆕 wallet-to-wallet transfer বাদ
+        if (type === "transfer" || category === "ওয়ালেট ট্রান্সফার") return;
 
-    drawSummaryChart(totalIncome, totalExpense, balance);
-    drawCategoryChart(incomeByCategory, expenseByCategory);
-    drawLineChart(dateWise);
-    drawFuelGauge(savingRate);
-  });
+        if (type === "income") {
+          if (category !== "সঞ্চয় ট্রান্সফার") {
+            totalIncome += amount;
+            incomeByCategory[category] = (incomeByCategory[category] || 0) + amount;
+          }
+        } else if (type === "expense") {
+          totalExpense += amount;
+          expenseByCategory[category] = (expenseByCategory[category] || 0) + amount;
+        }
+
+        if (category === "সঞ্চয়") {
+          totalSavingsRaw += amount;
+        }
+
+        if (!dateWise[date]) dateWise[date] = { income: 0, expense: 0 };
+        if (type === "income" && category !== "সঞ্চয় ট্রান্সফার") {
+          dateWise[date].income += amount;
+        } else if (type === "expense") {
+          dateWise[date].expense += amount;
+        }
+      });
+
+      let currentSavings = totalSavingsRaw - totalTransferredSavings;
+      if (currentSavings < 0) currentSavings = 0;
+      if (totalSavingsRaw < 0) totalSavingsRaw = 0;
+
+      const balance = Number(totalIncome) - Number(totalExpense);
+
+      const savingRate = totalIncome > 0
+        ? Math.round((balance / totalIncome) * 100)
+        : 0;
+
+      const elIncome = document.getElementById("totalIncome");
+      const elExpense = document.getElementById("totalExpense");
+      const elBalance = document.getElementById("balance");
+      if (elIncome)  elIncome.textContent  = toBanglaNumber(totalIncome);
+      if (elExpense) elExpense.textContent = toBanglaNumber(totalExpense);
+      if (elBalance) elBalance.textContent = toBanglaNumber(balance);
+
+      drawSummaryChart(totalIncome, totalExpense, balance);
+      drawCategoryChart(incomeByCategory, expenseByCategory);
+      drawLineChart(dateWise);
+      drawFuelGauge(savingRate);
+    }, err => console.error("Transactions snapshot error:", err));
+  }, err => console.error("User snapshot error:", err));
 }
 
-// ============================================
-// ✅ drawSummaryChart
-// ============================================
 function drawSummaryChart(income, expense, balance) {
   const canvas = document.getElementById('summaryChart');
   if (!canvas) return;
@@ -92,30 +128,37 @@ function drawSummaryChart(income, expense, balance) {
   const ctx = canvas.getContext('2d');
 
   if (window._summaryChartInstance) {
-    window._summaryChartInstance.destroy();
+    try { window._summaryChartInstance.destroy(); } catch (e) {}
+    window._summaryChartInstance = null;
   }
+
+  const inc = Number(income) || 0;
+  const exp = Number(expense) || 0;
+  const bal = Number(balance) || 0;
 
   window._summaryChartInstance = new Chart(ctx, {
     type: 'bar',
     data: {
-      labels: ['আয়', 'ব্যয়', 'সঞ্চয়'],
+      labels: ['আয়', 'ব্যয়', 'অবশিষ্ট'],
       datasets: [{
-        data: [income, expense, balance],
-        backgroundColor: ['#4caf50', '#f44336', '#2196f3']
+        data: [inc, exp, bal],
+        backgroundColor: ['#4caf50', '#f44336', '#2196f3'],
+        borderRadius: 6
       }]
     },
     options: {
-      responsive: false,
+      responsive: true,
       maintainAspectRatio: false,
       plugins: {
         legend: { display: false },
         datalabels: {
           color: 'white',
-          font: { weight: 'bold', size: 19 },
+          font: { weight: 'bold', size: 16 },
           anchor: 'end',
           align: 'start',
           formatter: function (value) {
-            return '৳' + value.toLocaleString();
+            const v = Number(value) || 0;
+            return '৳' + v.toLocaleString('bn-BD');
           }
         }
       },
@@ -126,7 +169,10 @@ function drawSummaryChart(income, expense, balance) {
           grid: { color: 'rgba(255,255,255,0.1)' }
         },
         x: {
-          ticks: { color: 'white' }
+          ticks: {
+            color: 'white',
+            font: { size: 14, weight: 'bold' }
+          }
         }
       }
     },
@@ -134,9 +180,6 @@ function drawSummaryChart(income, expense, balance) {
   });
 }
 
-// ============================================
-// ✅ drawCategoryChart — outerRadius এরর থেকে নিরাপদ
-// ============================================
 function drawCategoryChart(incomeData, expenseData) {
   const canvas = document.getElementById('categoryChart');
   if (!canvas) return;
@@ -151,8 +194,8 @@ function drawCategoryChart(incomeData, expenseData) {
     ...expenseCategories.map(c => `ব্যয় - ${c}`)
   ];
   const values = [
-    ...incomeCategories.map(c => incomeData[c]),
-    ...expenseCategories.map(c => expenseData[c])
+    ...incomeCategories.map(c => Number(incomeData[c]) || 0),
+    ...expenseCategories.map(c => Number(expenseData[c]) || 0)
   ];
   const colors = [
     ...incomeCategories.map(() => '#4caf50'),
@@ -161,11 +204,12 @@ function drawCategoryChart(incomeData, expenseData) {
 
   const incomeTotal = values.slice(0, incomeCategories.length).reduce((a, b) => a + b, 0);
   const expenseTotal = values.slice(incomeCategories.length).reduce((a, b) => a + b, 0);
-  const balance = incomeTotal - expenseTotal;
+  const netBalance = incomeTotal - expenseTotal;
   const total = incomeTotal + expenseTotal;
 
   if (window._categoryChartInstance) {
-    window._categoryChartInstance.destroy();
+    try { window._categoryChartInstance.destroy(); } catch (e) {}
+    window._categoryChartInstance = null;
   }
 
   const hasData = values.length > 0 && total > 0;
@@ -187,6 +231,7 @@ function drawCategoryChart(incomeData, expenseData) {
     },
     options: {
       responsive: true,
+      maintainAspectRatio: false,
       cutout: '40%',
       plugins: {
         legend: { display: false },
@@ -202,7 +247,7 @@ function drawCategoryChart(incomeData, expenseData) {
         },
         datalabels: {
           color: '#fff',
-          font: { weight: 'bold', size: 18 },
+          font: { weight: 'bold', size: 16 },
           formatter: (value) => {
             if (!hasData || total === 0) return '';
             const percentage = (value / total) * 100;
@@ -237,19 +282,16 @@ function drawCategoryChart(incomeData, expenseData) {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 28px SolaimanLipi, sans-serif';
+        ctx.font = 'bold 22px SolaimanLipi, sans-serif';
         ctx.fillText('মোট টাকা', centerX, centerY - 10);
-        ctx.font = 'bold 20px SolaimanLipi, sans-serif';
-        ctx.fillText(`৳${toBanglaNumber(balance)}`, centerX, centerY + 15);
+        ctx.font = 'bold 18px SolaimanLipi, sans-serif';
+        ctx.fillText(`৳${toBanglaNumber(netBalance)}`, centerX, centerY + 15);
         ctx.restore();
       }
     }]
   });
 }
 
-// ============================================
-// ✅ drawLineChart
-// ============================================
 let lineChartInstance = null;
 
 function drawLineChart(dateData) {
@@ -259,11 +301,11 @@ function drawLineChart(dateData) {
   const ctx = canvas.getContext('2d');
   const sortedDates = Object.keys(dateData || {}).sort();
 
-  const incomeData = sortedDates.map(date => dateData[date].income || 0);
-  const expenseData = sortedDates.map(date => dateData[date].expense || 0);
+  const incomeData = sortedDates.map(date => (dateData[date] && dateData[date].income) || 0);
+  const expenseData = sortedDates.map(date => (dateData[date] && dateData[date].expense) || 0);
 
   if (lineChartInstance) {
-    lineChartInstance.destroy();
+    try { lineChartInstance.destroy(); } catch (e) {}
     lineChartInstance = null;
   }
 
@@ -296,16 +338,17 @@ function drawLineChart(dateData) {
     },
     options: {
       responsive: true,
+      maintainAspectRatio: false,
       plugins: {
         tooltip: {
           mode: 'index',
           intersect: false,
-          bodyFont: { size: 20 },
-          titleFont: { size: 22 }
+          bodyFont: { size: 16 },
+          titleFont: { size: 18 }
         },
         legend: {
           labels: {
-            font: { family: 'Arial', size: 24 },
+            font: { family: 'Arial', size: 16 },
             color: '#ffffff'
           }
         },
@@ -323,7 +366,7 @@ function drawLineChart(dateData) {
           grid: { display: false },
           ticks: {
             color: '#ffffff',
-            font: { size: 18 }
+            font: { size: 14 }
           }
         },
         y: {
@@ -332,7 +375,7 @@ function drawLineChart(dateData) {
           ticks: {
             stepSize: 500,
             color: '#ffffff',
-            font: { size: 18 },
+            font: { size: 14 },
             callback: function (value) {
               return value + ' টাকা';
             }
@@ -346,9 +389,6 @@ function drawLineChart(dateData) {
   setupSlider(dateData, sortedDates);
 }
 
-// ============================================
-// ✅ setupSlider
-// ============================================
 function setupSlider(dateData, sortedDates) {
   const slider = document.getElementById('dateSlider');
   if (!slider) return;
@@ -368,12 +408,12 @@ function setupSlider(dateData, sortedDates) {
   newSlider.addEventListener('input', function () {
     if (!lineChartInstance) return;
 
-    const index = parseInt(this.value) || 0;
+    const index = parseInt(this.value, 10) || 0;
     const date = sortedDates[index];
     if (!date) return;
 
-    const income = dateData[date].income || 0;
-    const expense = dateData[date].expense || 0;
+    const income = (dateData[date] && dateData[date].income) || 0;
+    const expense = (dateData[date] && dateData[date].expense) || 0;
     const balance = income - expense;
 
     const banglaDate = convertToBanglaNumber(date);
@@ -389,7 +429,7 @@ function setupSlider(dateData, sortedDates) {
         backgroundColor: 'transparent',
         borderColor: 'transparent',
         color: '#fff',
-        font: { size: 14, weight: 'bold' },
+        font: { size: 13, weight: 'bold' },
         padding: 4,
         content: [
           `তারিখ: ${banglaDate}`,
@@ -417,9 +457,6 @@ function setupSlider(dateData, sortedDates) {
   newSlider.dispatchEvent(new Event('input'));
 }
 
-// ============================================
-// ✅ drawFuelGauge
-// ============================================
 let fuelGaugeInstance = null;
 
 function drawFuelGauge(savingRate) {
@@ -445,6 +482,11 @@ function drawFuelGauge(savingRate) {
   const color = getColor(savingRate);
   const container = document.querySelector("#fuel-gauge");
   if (!container) return;
+
+  if (typeof ApexCharts === 'undefined') {
+    console.warn('ApexCharts not loaded — fuel gauge skipped');
+    return;
+  }
 
   container.innerHTML = '';
   if (fuelGaugeInstance) {
@@ -472,7 +514,7 @@ function drawFuelGauge(savingRate) {
         },
         dataLabels: {
           name: {
-            fontSize: "16px",
+            fontSize: "15px",
             color: "#000",
             offsetY: 30
           },
@@ -481,7 +523,7 @@ function drawFuelGauge(savingRate) {
             fontSize: "22px",
             color: "#000",
             formatter: function (val) {
-              return toBanglaNumber(val.toFixed(0)) + " %";
+              return toBanglaNumber(val) + " %";
             }
           }
         }
@@ -495,15 +537,14 @@ function drawFuelGauge(savingRate) {
   fuelGaugeInstance.render();
 }
 
-// ============================================
-// Utility Functions
-// ============================================
 function toBanglaNumber(number) {
-  if (typeof number !== "number") number = parseFloat(number) || 0;
+  if (typeof number !== "number") number = parseFloat(number);
+  if (!Number.isFinite(number)) number = 0;
   return number.toLocaleString('bn-BD', { maximumFractionDigits: 2 });
 }
 
 function convertToBanglaNumber(input) {
   const banglaDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
-  return input.toString().replace(/\d/g, d => banglaDigits[d]);
+  if (input === null || input === undefined) return '';
+  return String(input).replace(/\d/g, d => banglaDigits[d]);
 }
