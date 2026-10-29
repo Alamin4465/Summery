@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="আয়-ব্যয় ব্যবস্থাপনা ও সঞ্চয় ট্র্যাকার" />
+  
   <title>আয়-ব্যয় ব্যবস্থাপনা</title>
 
   <!-- Font Awesome -->
@@ -32,25 +33,14 @@
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.4.0"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
 
-  <!-- Chart plugin registration (safe guards) -->
+  <!-- Chart plugin registration -->
   <script>
-    // Chart.js must be loaded before registering plugins
     if (typeof Chart !== 'undefined') {
-      // Annotation plugin (optional — may fail silently if not loaded)
       if (window['chartjs-plugin-annotation']) {
-        try {
-          Chart.register(window['chartjs-plugin-annotation']);
-        } catch (e) {
-          console.warn('chartjs-plugin-annotation register failed:', e);
-        }
+        try { Chart.register(window['chartjs-plugin-annotation']); } catch (e) {}
       }
-      // DataLabels — register globally so per-chart `plugins: [ChartDataLabels]` is optional
       if (window.ChartDataLabels) {
-        try {
-          Chart.register(window.ChartDataLabels);
-        } catch (e) {
-          console.warn('ChartDataLabels register failed:', e);
-        }
+        try { Chart.register(window.ChartDataLabels); } catch (e) {}
       }
     }
   </script>
@@ -62,7 +52,6 @@
     <button id="menu-toggle" aria-label="মেনু">
       <i class="fas fa-bars"></i>
     </button>
-    <!-- অটোমেটিক ইউজারের নাম এখানে আসবে -->
     <div class="mobile-title">লোড হচ্ছে...</div>
   </header>
 
@@ -72,15 +61,25 @@
   <!-- 🔵 সাইডবার -->
   <aside class="sidebar" id="sidebar">
 
-    <!-- লোগো -->
+    <!-- 🆕 সাইডবার হেডার: লোগো ও অ্যাপের নাম (পাশাপাশি) -->
     <div class="sidebar-header">
       <div class="logo-box">
         <i class="fas fa-wallet" style="color: #3b82f6;"></i>
-        <span>Alamin Hosen</span>
+        <span>আয়-ব্যয় ব্যবস্থাপনা</span>
       </div>
     </div>
 
-    <!-- 🆕 থিম টগল বাটন (প্রোফাইলের ঠিক উপরে) -->
+    <!-- 🆕 ইউজার প্রোফাইল কার্ড (লোগো উপরে, নাম ও সাইন-ইন আইকন পাশে) -->
+    <div id="user-name" title="প্রোফাইল দেখুন">
+      <!-- এই অংশটি JS থেকে রেন্ডার হবে, তবে প্রাথমিকভাবে এটি দেখাবে -->
+      <i class="fas fa-user-circle" style="font-size: 2.2rem; color: var(--primary);"></i>
+      <div class="profile-name-row">
+        <strong>লোড হচ্ছে...</strong>
+        <i class="fas fa-sign-in-alt"></i>
+      </div>
+    </div>
+
+    <!-- থিম টগল বাটন -->
     <div class="theme-toggle-wrapper">
       <span id="theme-label">ডিফল্ট থিম</span>
       <label class="switch">
@@ -88,11 +87,8 @@
         <span class="slider round"></span>
       </label>
     </div>
-
-    <!-- প্রোফাইল কার্ড (আইকন উপরে, নাম নিচে) -->
-    <div id="user-name" title="প্রোফাইল দেখুন"></div>
-
-    <!-- 🆕 সেভিংস অন/অফ টগল বাটন -->
+    
+    <!-- সেভিংস অন/অফ টগল বাটন -->
     <div class="savings-toggle-wrapper">
       <span>সেভিংস চালু</span>
       <label class="switch">
@@ -113,7 +109,6 @@
         <button class="menu-button" id="nav-forms"><i class="fas fa-file-alt"></i> ফর্মস</button>
         <button class="menu-button" id="nav-submit"><i class="fas fa-credit-card"></i> ট্রানজেকশন</button>
         <button class="menu-button" id="nav-filter"><i class="fas fa-search"></i> ফিল্টার</button>
-        <!-- 🆕 সেটিংস বাটন -->
         <button class="menu-button" id="nav-settings"><i class="fas fa-cog"></i> সেটিংস</button>
       </div>
     </nav>
@@ -124,7 +119,7 @@
     <p>লোড হচ্ছে...</p>
   </main>
 
-  <!-- সব JS ফাইল (order important) -->
+  <!-- সব JS ফাইল -->
   <script src="main.js"></script>
   <script src="monthday.js"></script>
   <script src="transactionfrom.js"></script>
@@ -145,7 +140,6 @@
 
       const APP_NAME = 'আয়-ব্যয় ব্যবস্থাপনা';
 
-      // মেনু আইডি → সেকশন টাইটেল (সঠিক বানান — 'ফর্মস')
       const sectionTitles = {
         'nav-dashboard': 'ড্যাশবোর্ড',
         'nav-forms':     'ফর্মস',
@@ -162,7 +156,6 @@
       if (menuToggle) menuToggle.addEventListener('click', toggleMenu);
       if (backdrop)   backdrop.addEventListener('click', toggleMenu);
 
-      // মেনু ক্লিকে টাইটেল আপডেট (মোবাইলের জন্য)
       menuButtons.forEach(btn => {
         btn.addEventListener('click', () => {
           if (mobileTitle && sectionTitles[btn.id]) {
@@ -172,7 +165,6 @@
         });
       });
 
-      // পেজের ভেতরের .titel থেকে টাইটেল sync
       if (content && mobileTitle) {
         const syncTitle = () => {
           const titleEl = content.querySelector('.titel');
@@ -189,9 +181,7 @@
         }
       }
 
-      // ============================================
-      // 🔥 Firebase থেকে অটোমেটিক ইউজারের নাম লোড
-      // ============================================
+      // 🔥 ইউজারের নাম লোড করা
       if (typeof firebase !== 'undefined' && firebase.auth) {
         firebase.auth().onAuthStateChanged(async (user) => {
           if (!user) return;
@@ -216,31 +206,34 @@
 
           if (!displayName) displayName = 'ব্যবহারকারী';
 
-          // মোবাইল টপবারে নাম বসানো (শুধু placeholder থাকলে)
+          // মোবাইল টপবারে নাম
           if (mobileTitle &&
               (mobileTitle.textContent === 'লোড হচ্ছে...' || mobileTitle.textContent === '')) {
             mobileTitle.textContent = displayName;
           }
 
-          // প্রোফাইল কার্ডে নাম বসানো (যদি অন্য JS না ভরে)
-          if (userNameEl && !userNameEl.textContent.trim()) {
-            userNameEl.textContent = displayName;
+          // 🆕 প্রোফাইল কার্ডে নাম ও আইকন বসানো (হাইট সমান করার জন্য)
+          if (userNameEl) {
+            userNameEl.innerHTML = `
+              <i class="fas fa-user-circle" style="font-size: 2.2rem; color: var(--primary);"></i>
+              <div class="profile-name-row">
+                <strong>${displayName}</strong>
+                <i class="fas fa-sign-in-alt"></i>
+              </div>
+            `;
           }
         });
       }
 
-      // ============================================
-      // 🆕 থিম (Theme) লজিক
-      // ============================================
+      // থিম লজিক
       const themeToggle = document.getElementById('theme-toggle');
       const themeLabel  = document.getElementById('theme-label');
 
       if (themeToggle && document.body) {
-        // লোকাল স্টোরেজ থেকে সেভ করা থিম লোড
         let savedTheme = 'default';
         try {
           savedTheme = localStorage.getItem('appTheme') || 'default';
-        } catch (e) { /* localStorage blocked */ }
+        } catch (e) { }
 
         if (savedTheme === 'dark') {
           document.body.classList.add('dark-theme');
@@ -248,7 +241,6 @@
           if (themeLabel) themeLabel.textContent = 'ডার্ক থিম';
         }
 
-        // টগল পরিবর্তন ইভেন্ট
         themeToggle.addEventListener('change', (e) => {
           if (e.target.checked) {
             document.body.classList.add('dark-theme');
@@ -264,7 +256,7 @@
     });
   </script>
 
-  <!-- PWA Service Worker Registration -->
+  <!-- PWA Service Worker -->
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
